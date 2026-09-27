@@ -22,7 +22,6 @@ export default function App() {
   const [gameStatus, setGameStatus] = useState('intro'); // 'intro' | 'playing' | 'ended'
   const [currentQuarter, setCurrentQuarter] = useState(1);
   const [stats, setStats] = useState(INITIAL_STATS);
-  const [previewImpact, setPreviewImpact] = useState(null);
   const [currentResult, setCurrentResult] = useState(null);
   const [activeEnding, setActiveEnding] = useState(null);
 
@@ -35,7 +34,6 @@ export default function App() {
   const handleRestart = () => {
     setStats(INITIAL_STATS);
     setCurrentQuarter(1);
-    setPreviewImpact(null);
     setCurrentResult(null);
     setActiveEnding(null);
     setGameStatus('playing');
@@ -101,17 +99,12 @@ export default function App() {
     }
 
     setCurrentResult(null);
-    setPreviewImpact(null);
   };
 
   const currentDilemma = DILEMMAS[currentQuarter - 1] || DILEMMAS[0];
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-3 sm:p-5 relative overflow-x-hidden">
-      {/* Background ambient lighting */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-80 bg-red-600/10 blur-[120px] pointer-events-none rounded-full" />
-      <div className="absolute bottom-0 right-0 w-80 h-80 bg-blue-600/10 blur-[140px] pointer-events-none rounded-full" />
-
       {/* Main Container */}
       <div className="w-full max-w-xl mx-auto flex-1 flex flex-col justify-between relative z-10">
         {gameStatus === 'intro' ? (
@@ -133,7 +126,7 @@ export default function App() {
         ) : (
           <div className="flex-1 flex flex-col justify-between py-2">
             {/* Top Area: Header & Indicator Bars */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <Header
                 currentQuarter={currentQuarter}
                 totalQuarters={DILEMMAS.length}
@@ -146,22 +139,20 @@ export default function App() {
 
               <IndicatorBar
                 stats={stats}
-                previewImpact={previewImpact}
               />
             </div>
 
-            {/* Middle Area: Swipable Card */}
+            {/* Middle Area: Situation Card */}
             <main className="my-auto py-2">
               <Card
                 dilemma={currentDilemma}
                 onMakeChoice={handleMakeChoice}
-                onPreviewImpact={setPreviewImpact}
               />
             </main>
 
             {/* Bottom Tip for classroom */}
-            <footer className="text-center text-[11px] text-slate-400 py-1">
-              Bấm vào <strong className="text-amber-400">"Thuyết trình"</strong> ở góc trên nếu đang chiếu lên màn hình lớp học
+            <footer className="text-center text-[11px] text-slate-500 py-1">
+              Nhấn <strong className="text-amber-400">"Thuyết trình"</strong> ở trên nếu đang trình chiếu trên màn hình lớp học
             </footer>
           </div>
         )}
