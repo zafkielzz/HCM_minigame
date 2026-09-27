@@ -575,8 +575,12 @@ export class MultiplayerSession {
       this.broadcastChannel = null;
     }
     if (this.mqttClient) {
-      try { this.mqttClient.end(true); } catch (e) {}
+      const client = this.mqttClient;
       this.mqttClient = null;
+      // Allow 350ms for outgoing packets (ROOM_CLOSED, retained state, PLAYER_LEAVE) to flush to network
+      setTimeout(() => {
+        try { client.end(false); } catch (e) {}
+      }, 350);
     }
     this.listeners = [];
   }

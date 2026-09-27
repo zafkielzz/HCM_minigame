@@ -31,7 +31,7 @@ export default function LeaderboardRoom({
   const [playerName, setPlayerName] = useState(() => {
     if (multiplayerContext?.playerName) return multiplayerContext.playerName;
     try {
-      return localStorage.getItem('hcm_player_name') || '';
+      return sessionStorage.getItem('hcm_tab_player_name') || '';
     } catch (e) {
       return '';
     }
@@ -39,10 +39,15 @@ export default function LeaderboardRoom({
   const [playerId] = useState(() => {
     if (multiplayerContext?.playerId) return multiplayerContext.playerId;
     try {
-      let id = localStorage.getItem('hcm_player_id');
+      // Clean up any legacy shared localStorage keys so tabs never share player ID
+      localStorage.removeItem('hcm_player_id');
+      localStorage.removeItem('hcm_player_name');
+    } catch (e) {}
+    try {
+      let id = sessionStorage.getItem('hcm_tab_player_id');
       if (!id) {
         id = 'p_' + Math.random().toString(36).substring(2, 9);
-        localStorage.setItem('hcm_player_id', id);
+        sessionStorage.setItem('hcm_tab_player_id', id);
       }
       return id;
     } catch (e) {
@@ -193,20 +198,38 @@ export default function LeaderboardRoom({
           let isBrandNew = true;
           const targetLower = trimmedName.toLowerCase();
 
+          // 1. Check if a player with this exact name already exists
+          let existingIdForName = null;
           for (const [id, p] of Object.entries(prev)) {
-            const matchId = id === data.playerId;
-            const matchName = p.name && p.name.trim().toLowerCase() === targetLower;
+            if (p.name && p.name.trim().toLowerCase() === targetLower) {
+              existingIdForName = id;
+              break;
+            }
+          }
 
-            if (matchId || matchName) {
-              // Existing player rejoining or heartbeat! Do NOT duplicate!
+          let assignedKey = data.playerId;
+
+          for (const [id, p] of Object.entries(prev)) {
+            const isSameName = p.name && p.name.trim().toLowerCase() === targetLower;
+            const isSameId = id === data.playerId;
+
+            if (isSameName) {
+              // Same name re-joining or heartbeat! Do NOT duplicate!
               isBrandNew = false;
-              // Drop old key if ID changed, will re-insert with data.playerId below
+              // Old entry dropped, will be re-inserted under assignedKey below
+            } else if (isSameId) {
+              // Collision protection! An existing player with a DIFFERENT name already has this ID!
+              // NEVER overwrite them! Keep the existing player!
+              next[id] = p;
+              // Assign a safe non-colliding key for this new person
+              assignedKey = `${data.playerId}_${Math.random().toString(36).substring(2, 6)}`;
             } else {
               next[id] = p;
             }
           }
 
-          next[data.playerId] = {
+          next[assignedKey] = {
+            ...(prev[existingIdForName] || {}),
             name: trimmedName,
             quarter: 1,
             stats: { people: 60, law: 60, integrity: 60, reform: 60 },
@@ -358,8 +381,11 @@ export default function LeaderboardRoom({
         status: 'closed',
         message: 'Chủ phòng đã đóng phòng thi đấu!'
       });
-      sessionRef.current.close();
+      const activeSession = sessionRef.current;
       sessionRef.current = null;
+      setTimeout(() => {
+        activeSession.close();
+      }, 300);
     }
     unregisterHostRoom(roomCode);
     setMode('select');
@@ -404,7 +430,7 @@ export default function LeaderboardRoom({
       sessionRef.current = session;
 
       try {
-        localStorage.setItem('hcm_player_name', trimmedName);
+        sessionStorage.setItem('hcm_tab_player_name', trimmedName);
       } catch (err) {}
 
       // Send join message
