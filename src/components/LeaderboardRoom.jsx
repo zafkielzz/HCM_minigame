@@ -213,15 +213,21 @@ export default function LeaderboardRoom({
             const isSameName = p.name && p.name.trim().toLowerCase() === targetLower;
             const isSameId = id === data.playerId;
 
-            if (isSameName) {
-              // Same name re-joining or heartbeat! Do NOT duplicate!
+            if (isSameName && isSameId) {
+              // Exact same player heartbeat: update in-place without moving key in object
+              return {
+                ...prev,
+                [id]: {
+                  ...p,
+                  lastSeen: Date.now()
+                }
+              };
+            } else if (isSameName) {
+              // Same name re-joining or refreshed: update ID
               isBrandNew = false;
-              // Old entry dropped, will be re-inserted under assignedKey below
             } else if (isSameId) {
               // Collision protection! An existing player with a DIFFERENT name already has this ID!
-              // NEVER overwrite them! Keep the existing player!
               next[id] = p;
-              // Assign a safe non-colliding key for this new person
               assignedKey = `${data.playerId}_${Math.random().toString(36).substring(2, 6)}`;
             } else {
               next[id] = p;
@@ -486,12 +492,16 @@ export default function LeaderboardRoom({
     }
   };
 
-  // Sort host players for lobby & live views
+  // Sort host players for lobby & live views (stable alphabetical in lobby, performance-based in live)
   const hostPlayersList = Object.entries(players)
     .map(([id, p]) => ({ id, ...p }))
     .sort((a, b) => {
+      if (hostPhase === 'lobby') {
+        return (a.name || '').localeCompare(b.name || '', 'vi');
+      }
       if (b.quarter !== a.quarter) return b.quarter - a.quarter;
-      return (b.score || 0) - (a.score || 0);
+      if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+      return (a.name || '').localeCompare(b.name || '', 'vi');
     });
 
   // Explicit sortedPlayers reference ensures host lobby & live table NEVER crash
@@ -508,7 +518,8 @@ export default function LeaderboardRoom({
   const effectivePlayersList = (syncedPlayersList && syncedPlayersList.length > 0) || (externalPlayersList && externalPlayersList.length > 0)
     ? [...rawList].sort((a, b) => {
         if (b.quarter !== a.quarter) return b.quarter - a.quarter;
-        return (b.score || 0) - (a.score || 0);
+        if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+        return (a.name || '').localeCompare(b.name || '', 'vi');
       })
     : hostPlayersList;
 
