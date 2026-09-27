@@ -271,6 +271,7 @@ export class MultiplayerSession {
     this.storageListener = null;
     this.heartbeatTimer = null;
     this.closed = false;
+    this.sessionStartFired = false; // Guard: only fire SESSION_START once per session
 
     this.init();
   }
@@ -367,11 +368,14 @@ export class MultiplayerSession {
               if (data.sessionId && !this.sessionId) {
                 this.sessionId = data.sessionId;
               }
-              if (data.status === 'live') {
+              if (data.status === 'live' && !this.sessionStartFired) {
+                // Only fire SESSION_START ONCE — ignore subsequent retained state re-deliveries
+                this.sessionStartFired = true;
                 this.handleIncoming({ type: 'SESSION_START', ...data });
               } else if (data.status === 'summary') {
                 this.handleIncoming({ type: 'SESSION_END', ...data });
               }
+              // Ignore repeated 'live' status messages after the first one
             }
             return;
           }
@@ -410,6 +414,12 @@ export class MultiplayerSession {
     // Filter out messages from different / old sessions
     if (this.sessionId && data.sessionId && data.sessionId !== this.sessionId) {
       return;
+    }
+
+    // Guard: if SESSION_START already fired, don't fire it again from any transport
+    if (!this.isHost && data.type === 'SESSION_START') {
+      if (this.sessionStartFired) return; // Already processed
+      this.sessionStartFired = true;
     }
 
     if (this.isHost) {

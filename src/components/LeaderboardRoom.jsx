@@ -25,7 +25,7 @@ export default function LeaderboardRoom({
   syncedPlayersList = [],
   onLeaveMultiplayer
 }) {
-  const ADMIN_PASSWORD = 'nam123123';
+  const ADMIN_PASSWORD = 'namngo001';
   const [mode, setMode] = useState('select'); // 'select' | 'host' | 'join' | 'summary'
   const [roomCode, setRoomCode] = useState(() => multiplayerContext?.roomCode || '');
   const [playerName, setPlayerName] = useState(() => multiplayerContext?.playerName || '');
@@ -264,8 +264,10 @@ export default function LeaderboardRoom({
       });
 
       // Listen for Host signals
+      let sessionStartHandled = false;
       session.onMessage((data) => {
-        if (data.type === 'SESSION_START') {
+        if (data.type === 'SESSION_START' && !sessionStartHandled) {
+          sessionStartHandled = true;
           setSessionStarted(true);
           playSound('select');
           onClose(); // Auto-close modal immediately so the question card is displayed!
