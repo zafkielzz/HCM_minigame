@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Presentation, Eye, EyeOff, MessageSquare, Sparkles, X, ChevronRight, ChevronLeft } from 'lucide-react';
+import AvatarVector from './AvatarVector';
 
 export default function PresentationMode({ isOpen, onClose, currentDilemma, onMakeChoice }) {
   const [showAnalysis, setShowAnalysis] = useState(false);
@@ -33,16 +34,16 @@ export default function PresentationMode({ isOpen, onClose, currentDilemma, onMa
           </button>
         </div>
 
-        {/* Big Situation Card */}
+        {/* Big Situation Card with Silhouette Avatar */}
         <div className="my-6 p-6 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-xl">
-          <div className="flex items-center gap-3 mb-3">
-            <span className="text-3xl">{currentDilemma.character.avatar}</span>
+          <div className="flex items-center gap-4 mb-4">
+            <AvatarVector id={currentDilemma.character.avatarId} size="w-16 h-16 sm:w-20 sm:h-20" className="border border-slate-600" />
             <div>
-              <h4 className="font-extrabold text-slate-100 text-base">{currentDilemma.character.name}</h4>
-              <span className="text-xs text-amber-400 font-medium">{currentDilemma.character.role}</span>
+              <h4 className="font-extrabold text-slate-100 text-lg sm:text-xl">{currentDilemma.character.name}</h4>
+              <span className="text-xs sm:text-sm text-amber-400 font-semibold">{currentDilemma.character.role}</span>
             </div>
           </div>
-          <p className="font-serif text-slate-100 text-lg sm:text-xl leading-relaxed italic">
+          <p className="font-serif text-slate-100 text-lg sm:text-2xl leading-relaxed italic border-t border-slate-700/60 pt-3">
             "{currentDilemma.situation}"
           </p>
         </div>

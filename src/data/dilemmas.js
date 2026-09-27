@@ -16,7 +16,7 @@ export const DILEMMAS = [
     character: {
       name: "Bác Ba Nông Dân",
       role: "Đại diện Ban thanh tra nhân dân thôn",
-      avatar: "👴",
+      avatarId: "farmer",
       tagColor: "amber"
     },
     situation: "Bà con bức xúc về mức đền bù dự án làm đường liên xã. Cán bộ văn phòng khuyên đồng chí nên hạn chế tiếp xúc trực tiếp để tránh áp lực từ cử tri đông đảo.",
@@ -40,7 +40,7 @@ export const DILEMMAS = [
     character: {
       name: "Đồng chí Thu Hà",
       role: "Chuyên viên Bộ phận Một Cửa",
-      avatar: "👩‍💼",
+      avatarId: "civil_servant",
       tagColor: "blue"
     },
     situation: "Nhiều người dân đi làm thủ tục hành chính bị cán bộ vòi xuất trình sổ hộ khẩu giấy cũ dù đã có quy định tích hợp trên cơ sở dữ liệu số VNeID.",
@@ -64,7 +64,7 @@ export const DILEMMAS = [
     character: {
       name: "Đ/c Trưởng phòng Tài chính",
       role: "Ban Quản lý Ngân sách Huyện",
-      avatar: "👨‍💼",
+      avatarId: "finance",
       tagColor: "emerald"
     },
     situation: "Có đề xuất trích 15 tỷ đồng ngân sách để xây dựng một 'Cổng chào biểu tượng' hoành tráng chào mừng sự kiện lớn của địa phương.",
@@ -88,7 +88,7 @@ export const DILEMMAS = [
     character: {
       name: "Ông Vĩnh Hưng",
       role: "Chủ xưởng gỗ lớn kiêm người họ hàng thân tín",
-      avatar: "🧔",
+      avatarId: "business_relative",
       tagColor: "purple"
     },
     situation: "Xưởng gỗ của người quen chưa đủ điều kiện nghiệm thu PCCC, đến xin bạn 'ký tạm linh động' để kịp mở cửa giao lô hàng xuất khẩu sang châu Âu.",
@@ -112,7 +112,7 @@ export const DILEMMAS = [
     character: {
       name: "Đồng chí Trưởng ban Tổ chức",
       role: "Ban Đổi mới sắp xếp bộ máy",
-      avatar: "👔",
+      avatarId: "organizer",
       tagColor: "blue"
     },
     situation: "Thực hiện Nghị quyết về tinh giản bộ máy: Có kế hoạch sáp nhập 3 phòng ban chồng chéo chức năng, giảm 2 cấp trưởng và 5 biên chế dôi dư, nhưng nội bộ đang phản đối gay gắt.",
@@ -136,7 +136,7 @@ export const DILEMMAS = [
     character: {
       name: "Bà Hai Cử Tri",
       role: "Đại biểu Hội đồng Nhân dân xã",
-      avatar: "👵",
+      avatarId: "elderly_voter",
       tagColor: "amber"
     },
     situation: "Dự án quy hoạch trung tâm sinh hoạt cộng đồng: Một tập đoàn bất động sản muốn mua lại để xây khu thương mại sinh lời cao, nhưng cử tri muốn làm công viên cây xanh công cộng.",
@@ -160,7 +160,7 @@ export const DILEMMAS = [
     character: {
       name: "Đồng chí Chánh Thanh tra",
       role: "Cơ quan Thanh tra Huyện",
-      avatar: "🕵️‍♂️",
+      avatarId: "inspector",
       tagColor: "emerald"
     },
     situation: "Phát hiện một cán bộ địa chính vòi vĩnh nhận hối lộ làm sổ đỏ của người nghèo. Đáng chú ý, cán bộ này là con của một đồng chí có nhiều huân chương công trạng.",
@@ -184,7 +184,7 @@ export const DILEMMAS = [
     character: {
       name: "Kỹ sư Chuyển đổi số Minh",
       role: "Tổ Công nghệ Đổi mới Sáng tạo",
-      avatar: "👨‍💻",
+      avatarId: "tech_dev",
       tagColor: "blue"
     },
     situation: "Đề xuất cắt giảm 12 loại giấy chứng thực rườm rà, thay bằng xác thực trực tuyến qua Cổng Dịch vụ công. Một số cán bộ lâu năm ngại học phần mềm mới.",
@@ -208,7 +208,7 @@ export const DILEMMAS = [
     character: {
       name: "Bà Cụ Tám Bán Rong",
       role: "Người già mưu sinh trên vỉa hè",
-      avatar: "👵",
+      avatarId: "street_vendor",
       tagColor: "purple"
     },
     situation: "Đợt ra quân lập lại trật tự đô thị: Đội trật tự đề xuất tịch thu toàn bộ xe gánh của các cụ già bán hàng rong lấn chiếm góc phố để lập thành tích 'tuyến phố kiểu mẫu'.",
@@ -232,7 +232,7 @@ export const DILEMMAS = [
     character: {
       name: "Giám đốc Doanh nghiệp Xây dựng",
       role: "Nhà thầu thân quen dự án trường học",
-      avatar: "💼",
+      avatarId: "contractor",
       tagColor: "emerald"
     },
     situation: "Đấu thầu xây dựng trường học liên xã: Nhà thầu xin cài đặt tiêu chí kỹ thuật riêng biệt để hạn chế nhà thầu khác tham gia, đổi lại hứa trích 5% hỗ trợ ngân sách 'tiếp khách' của huyện.",
@@ -256,7 +256,7 @@ export const DILEMMAS = [
     character: {
       name: "Đồng chí Giám đốc Ban QLDA",
       role: "Cán bộ phụ trách giải ngân vốn công",
-      avatar: "👷‍♂️",
+      avatarId: "pmu_director",
       tagColor: "blue"
     },
     situation: "Bệnh 'Sợ trách nhiệm': Hồ sơ giải ngân trạm bơm chống úng ngập đúng quy định nhưng cán bộ sợ sai sót nên không ai chịu ký nháy, đùn đẩy lên tận bàn Chủ tịch huyện xin ý kiến.",
@@ -280,7 +280,7 @@ export const DILEMMAS = [
     character: {
       name: "Đồng chí Bí thư Huyện đoàn",
       role: "Thành viên Ban Giám sát Khiếu nại",
-      avatar: "🧑‍🎓",
+      avatarId: "youth_leader",
       tagColor: "amber"
     },
     situation: "Một đại biểu HĐND huyện nhiều kỳ liền không tham gia tiếp xúc cử tri, có thái độ trịch thượng và bị nhân dân khu phố ký tên kiến nghị bãi miễn tư cách đại biểu.",
@@ -304,7 +304,7 @@ export const DILEMMAS = [
     character: {
       name: "Ủy viên Ủy ban Kiểm tra",
       role: "Cơ quan Kê khai Tài sản",
-      avatar: "📋",
+      avatarId: "exam_officer",
       tagColor: "emerald"
     },
     situation: "Dự thảo Quy chế công khai minh bạch tài sản, thu nhập của toàn bộ lãnh đạo chủ chốt trên cổng thông tin điện tử huyện để nhân dân giám sát.",
@@ -328,7 +328,7 @@ export const DILEMMAS = [
     character: {
       name: "Nhà báo Điều tra",
       role: "Báo Pháp luật & Đời sống",
-      avatar: "📰",
+      avatarId: "journalist",
       tagColor: "purple"
     },
     situation: "Trên mạng lan truyền video một gia đình dựng rạp lấn chiếm toàn bộ đê thoát lũ. Khi xã yêu cầu dỡ bỏ thì họ livestream khóc lóc, cư dân mạng tạo áp lực đòi miễn trừ cho họ.",
@@ -352,7 +352,7 @@ export const DILEMMAS = [
     character: {
       name: "Chị Thảo Khảo Sát",
       role: "Đoàn đánh giá Chỉ số Hài lòng SIPAS",
-      avatar: "📊",
+      avatarId: "surveyor",
       tagColor: "blue"
     },
     situation: "Kết quả đo lường sự hài lòng của nhân dân (SIPAS) quý này tại bộ phận cấp phép kinh doanh giảm sút do thủ tục thẩm định còn rườm rà. Lãnh đạo phòng đề xuất xin 'chỉnh số liệu đẹp' để giữ danh hiệu thi đua.",
@@ -376,7 +376,7 @@ export const DILEMMAS = [
     character: {
       name: "Bác Chủ tịch Mặt trận Tổ quốc",
       role: "Hội nghị Tiếp xúc Cử tri Toàn Huyện",
-      avatar: "🏛️",
+      avatarId: "front_president",
       tagColor: "amber"
     },
     situation: "Kết thúc nhiệm kỳ 4 năm: Chuẩn bị Đại hội bầu cử khóa mới. Nhiều người khuyên bạn nên dùng ngân sách chi quà tặng cho các đại biểu để gom phiếu tín nhiệm tuyệt đối.",
