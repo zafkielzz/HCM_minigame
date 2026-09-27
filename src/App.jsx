@@ -6,7 +6,6 @@ import ConsequenceModal from './components/ConsequenceModal';
 import EndScreen from './components/EndScreen';
 import IntroScreen from './components/IntroScreen';
 import HandbookModal from './components/HandbookModal';
-import PresentationMode from './components/PresentationMode';
 import LeaderboardRoom from './components/LeaderboardRoom';
 
 import { DILEMMAS } from './data/dilemmas';
@@ -28,7 +27,6 @@ export default function App() {
 
   // Modals & settings
   const [isHandbookOpen, setIsHandbookOpen] = useState(false);
-  const [isPresentationOpen, setIsPresentationOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
@@ -145,9 +143,9 @@ export default function App() {
   const currentDilemma = DILEMMAS[currentQuarter - 1] || DILEMMAS[0];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-3 sm:p-5 relative overflow-x-hidden">
-      {/* Main Container */}
-      <div className="w-full max-w-xl mx-auto flex-1 flex flex-col justify-between relative z-10">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-3 sm:p-6 relative overflow-x-hidden">
+      {/* Main Container - Expanded width for spacious readability */}
+      <div className="w-full max-w-2xl mx-auto flex-1 flex flex-col justify-between relative z-10">
         {gameStatus === 'intro' ? (
           <div className="my-auto">
             <IntroScreen 
@@ -168,12 +166,11 @@ export default function App() {
         ) : (
           <div className="flex-1 flex flex-col justify-between py-2">
             {/* Top Area: Header & Indicator Bars */}
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               <Header
                 currentQuarter={currentQuarter}
                 totalQuarters={DILEMMAS.length}
                 onOpenHandbook={() => setIsHandbookOpen(true)}
-                onOpenPresentation={() => setIsPresentationOpen(true)}
                 onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
                 isMuted={isMuted}
                 onToggleMute={() => setIsMuted(!isMuted)}
@@ -186,7 +183,7 @@ export default function App() {
             </div>
 
             {/* Middle Area: Situation Card */}
-            <main className="my-auto py-2">
+            <main className="my-auto py-3">
               <Card
                 dilemma={currentDilemma}
                 onMakeChoice={handleMakeChoice}
@@ -194,13 +191,13 @@ export default function App() {
             </main>
 
             {/* Bottom Tip for classroom */}
-            <footer className="text-center text-[11px] text-slate-500 py-1 flex items-center justify-center gap-2">
+            <footer className="text-center text-xs text-slate-500 py-1.5 flex items-center justify-center gap-2">
               {multiplayerContext ? (
                 <span className="text-amber-400 font-bold">
-                  ● Đang thi đấu trong phòng [{multiplayerContext.roomCode}] với tư cách: {multiplayerContext.playerName}
+                  ● Đang thi đấu trong phòng [{multiplayerContext.roomCode}] • Thí sinh: {multiplayerContext.playerName}
                 </span>
               ) : (
-                <span>Kéo chuột sang trái (Phương án A) hoặc sang phải (Phương án B)</span>
+                <span>Kéo thẻ chuột sang trái (Phương án A) hoặc sang phải (Phương án B)</span>
               )}
             </footer>
           </div>
@@ -217,14 +214,6 @@ export default function App() {
       <HandbookModal
         isOpen={isHandbookOpen}
         onClose={() => setIsHandbookOpen(false)}
-      />
-
-      {/* Classroom Presentation Mode Modal */}
-      <PresentationMode
-        isOpen={isPresentationOpen}
-        onClose={() => setIsPresentationOpen(false)}
-        currentDilemma={currentDilemma}
-        onMakeChoice={handleMakeChoice}
       />
 
       {/* Classroom Leaderboard & Real-time Session Modal */}
