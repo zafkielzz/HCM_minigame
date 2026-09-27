@@ -374,6 +374,8 @@ export class MultiplayerSession {
                 this.handleIncoming({ type: 'SESSION_START', ...data });
               } else if (data.status === 'summary') {
                 this.handleIncoming({ type: 'SESSION_END', ...data });
+              } else if (data.status === 'closed') {
+                this.handleIncoming({ type: 'ROOM_CLOSED', ...data });
               }
               // Ignore repeated 'live' status messages after the first one
             }
@@ -430,11 +432,12 @@ export class MultiplayerSession {
       // Host handles student join, progress, finish
       this.notify(data);
     } else {
-      // Student only cares about host control signals (SESSION_START, SESSION_END, ROOM_STATE)
+      // Student only cares about host control signals (SESSION_START, SESSION_END, ROOM_STATE, ROOM_CLOSED)
       if (
         data.type === 'SESSION_START' ||
         data.type === 'SESSION_END' ||
-        data.type === 'ROOM_STATE'
+        data.type === 'ROOM_STATE' ||
+        data.type === 'ROOM_CLOSED'
       ) {
         this.notify(data);
       }
@@ -503,6 +506,8 @@ export class MultiplayerSession {
           this.publishRetainedState('live');
         } else if (packet.type === 'SESSION_END') {
           this.publishRetainedState('summary');
+        } else if (packet.type === 'ROOM_CLOSED') {
+          this.publishRetainedState('closed');
         }
       } else {
         this.mqttClient.publish(

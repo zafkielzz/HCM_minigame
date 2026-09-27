@@ -100,6 +100,21 @@ export default function App() {
           spread: 80,
           origin: { y: 0.5 }
         });
+      } else if (data.type === 'ROOM_CLOSED') {
+        if (sessionData.session) {
+          sessionData.session.close();
+        }
+        setMultiplayerContext(null);
+        setIsSessionEndedByHost(false);
+        setIsLeaderboardOpen(false);
+        setDilemmas(getShuffledDilemmas(null));
+        setCurrentQuarter(1);
+        setStats(INITIAL_STATS);
+        setCurrentResult(null);
+        setActiveEnding(null);
+        setGameStatus('intro');
+        playSound('stamp');
+        alert('Chủ phòng đã đóng phòng thi đấu! Bạn đã được đưa về trang chủ.');
       }
     });
 

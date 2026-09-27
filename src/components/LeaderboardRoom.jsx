@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Trophy, Users, Play, StopCircle, RefreshCw, X, Check, Copy, 
   Crown, AlertCircle, ArrowRight, ArrowLeft, UserCheck, Flame, ClipboardList,
-  Eye, EyeOff, Lock, LogOut
+  Eye, EyeOff, Lock, LogOut, Trash2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { 
@@ -329,6 +329,31 @@ export default function LeaderboardRoom({
     }
   };
 
+  // Host closes & permanently deletes the room (kicking all students)
+  const handleHostCloseRoom = () => {
+    const confirmClose = window.confirm(
+      '⚠️ BẠN CÓ CHẮC CHẮN MUỐN ĐÓNG PHÒNG THI ĐẤU NÀY?\n\nTất cả thí sinh đang tham gia sẽ tự động bị out khỏi phòng và phiên đấu sẽ kết thúc.'
+    );
+    if (!confirmClose) return;
+
+    if (sessionRef.current) {
+      sessionRef.current.setStatus('closed');
+      sessionRef.current.broadcast({
+        type: 'ROOM_CLOSED',
+        roomCode,
+        status: 'closed',
+        message: 'Chủ phòng đã đóng phòng thi đấu!'
+      });
+      sessionRef.current.close();
+      sessionRef.current = null;
+    }
+    unregisterHostRoom(roomCode);
+    setMode('select');
+    setHostPhase('lobby');
+    setPlayers({});
+    playSound('stamp');
+  };
+
   // Student joins a room with verification
   const handleJoinRoom = async (e) => {
     e.preventDefault();
@@ -404,6 +429,14 @@ export default function LeaderboardRoom({
             spread: 80,
             origin: { y: 0.5 }
           });
+        } else if (data.type === 'ROOM_CLOSED') {
+          if (sessionRef.current) {
+            sessionRef.current.close();
+            sessionRef.current = null;
+          }
+          setMode('select');
+          setJoinError('Chủ phòng đã đóng phòng thi đấu này!');
+          playSound('stamp');
         }
       });
     } catch (err) {
@@ -488,6 +521,10 @@ export default function LeaderboardRoom({
             {mode !== 'select' && !isSessionEndedByHost && mode !== 'summary' && (
               <button
                 onClick={() => {
+                  if (mode === 'host') {
+                    handleHostCloseRoom();
+                    return;
+                  }
                   if (sessionRef.current) {
                     if (mode === 'join') {
                       sessionRef.current.broadcast({
@@ -552,19 +589,29 @@ export default function LeaderboardRoom({
                 </button>
 
                 {mode === 'host' && (
-                  <button
-                    onClick={() => {
-                      setHostPhase('lobby');
-                      setPlayers({});
-                      if (sessionRef.current) {
-                        sessionRef.current.resetSession();
-                      }
-                    }}
-                    className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-md w-full sm:w-auto shrink-0"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    <span>Mở Lượt Chơi Mới</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        setHostPhase('lobby');
+                        setPlayers({});
+                        if (sessionRef.current) {
+                          sessionRef.current.resetSession();
+                        }
+                      }}
+                      className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-md w-full sm:w-auto shrink-0"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      <span>Mở Lượt Chơi Mới</span>
+                    </button>
+                    <button
+                      onClick={handleHostCloseRoom}
+                      className="py-2.5 px-3.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs w-full sm:w-auto shrink-0"
+                      title="Đóng và xoá phòng thi đấu"
+                    >
+                      <Trash2 className="w-4 h-4 text-rose-600" />
+                      <span>Đóng Phòng</span>
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -898,12 +945,12 @@ export default function LeaderboardRoom({
               </div>
 
               {/* Action Buttons depending on phase */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 {hostPhase === 'lobby' ? (
                   <button
                     onClick={handleHostStart}
                     disabled={sortedPlayers.length === 0}
-                    className="w-full sm:w-auto py-3 px-6 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                    className="flex-1 sm:flex-initial py-3 px-6 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
                   >
                     <Play className="w-4 h-4 fill-white" />
                     <span>Bắt Đầu Phiên Thi Đấu ({sortedPlayers.length})</span>
@@ -911,12 +958,21 @@ export default function LeaderboardRoom({
                 ) : (
                   <button
                     onClick={handleHostEnd}
-                    className="w-full sm:w-auto py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                    className="flex-1 sm:flex-initial py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
                   >
                     <StopCircle className="w-4 h-4" />
                     <span>Kết Thúc Phiên & Tổng Kết</span>
                   </button>
                 )}
+
+                <button
+                  onClick={handleHostCloseRoom}
+                  className="py-3 px-3.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
+                  title="Đóng và xoá phòng thi đấu"
+                >
+                  <Trash2 className="w-4 h-4 text-rose-600" />
+                  <span className="hidden sm:inline">Đóng Phòng</span>
+                </button>
               </div>
             </div>
 
