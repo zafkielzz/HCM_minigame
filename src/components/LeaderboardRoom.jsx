@@ -74,6 +74,34 @@ export default function LeaderboardRoom({
   const [copiedRankingReport, setCopiedRankingReport] = useState(false);
   const sessionRef = useRef(null);
   const sessionStartHandledRef = useRef(false);
+  const playersRef = useRef({});
+
+  // Reset all session and room state back to select screen
+  const resetToSelectMode = () => {
+    setMode('select');
+    setExternalPlayersList(null);
+    setSessionStarted(false);
+    sessionStartHandledRef.current = false;
+    setJoinError(null);
+    setPlayers({});
+    playersRef.current = {};
+    if (sessionRef.current) {
+      if (mode === 'join' || mode === 'summary') {
+        try {
+          sessionRef.current.broadcast({
+            type: 'PLAYER_LEAVE',
+            playerId,
+            name: playerName.trim()
+          });
+        } catch (e) {}
+      }
+      sessionRef.current.close();
+      sessionRef.current = null;
+    }
+    if (onLeaveMultiplayer) {
+      onLeaveMultiplayer();
+    }
+  };
 
   // Student auto-transition to game questions when session starts
   const handleTriggerStudentStartGame = (incomingSessionId) => {
@@ -99,6 +127,19 @@ export default function LeaderboardRoom({
       setMode('summary');
     }
   }, [isSessionEndedByHost, syncedPlayersList]);
+
+  // When modal opens fresh with no active multiplayer, ensure clean select mode
+  useEffect(() => {
+    if (isOpen) {
+      if (!multiplayerContext && !isSessionEndedByHost && (!syncedPlayersList || syncedPlayersList.length === 0)) {
+        setMode('select');
+        setExternalPlayersList(null);
+        setSessionStarted(false);
+        sessionStartHandledRef.current = false;
+        setJoinError(null);
+      }
+    }
+  }, [isOpen, multiplayerContext, isSessionEndedByHost, syncedPlayersList]);
 
   // Clean up session on close
   useEffect(() => {
@@ -205,6 +246,9 @@ export default function LeaderboardRoom({
 
     const session = new MultiplayerSession(code, true);
     session.setStatus('lobby');
+    session.setExtraStateProvider(() => ({
+      takenNicknames: Object.values(playersRef.current).map(p => (p.name || '').trim().toLowerCase())
+    }));
     sessionRef.current = session;
 
     session.onMessage((data) => {
@@ -216,61 +260,54 @@ export default function LeaderboardRoom({
         const trimmedName = (data.name || '').trim();
         if (!trimmedName || !data.playerId) return;
 
-        setPlayers((prev) => {
-          const next = {};
-          let isBrandNew = true;
-          const targetLower = trimmedName.toLowerCase();
+        const targetLower = trimmedName.toLowerCase();
 
-          // 1. Check if a player with this exact name already exists
-          let existingIdForName = null;
-          for (const [id, p] of Object.entries(prev)) {
-            if (p.name && p.name.trim().toLowerCase() === targetLower) {
-              existingIdForName = id;
-              break;
-            }
+        // 1. Check if another player (different playerId) already has this nickname
+        let isNicknameTaken = false;
+        for (const [id, p] of Object.entries(playersRef.current)) {
+          if (id !== data.playerId && p.name && p.name.trim().toLowerCase() === targetLower) {
+            isNicknameTaken = true;
+            break;
           }
+        }
 
-          let assignedKey = data.playerId;
-
-          for (const [id, p] of Object.entries(prev)) {
-            const isSameName = p.name && p.name.trim().toLowerCase() === targetLower;
-            const isSameId = id === data.playerId;
-
-            if (isSameName && isSameId) {
-              // Exact same player heartbeat: update in-place without moving key in object
-              return {
-                ...prev,
-                [id]: {
-                  ...p,
-                  lastSeen: Date.now()
-                }
-              };
-            } else if (isSameName) {
-              // Same name re-joining or refreshed: update ID
-              isBrandNew = false;
-            } else if (isSameId) {
-              // Collision protection! An existing player with a DIFFERENT name already has this ID!
-              next[id] = p;
-              assignedKey = `${data.playerId}_${Math.random().toString(36).substring(2, 6)}`;
-            } else {
-              next[id] = p;
-            }
-          }
-
-          next[assignedKey] = {
-            ...(prev[existingIdForName] || {}),
+        if (isNicknameTaken) {
+          sessionRef.current?.broadcast({
+            type: 'PLAYER_JOIN_REJECTED',
+            playerId: data.playerId,
             name: trimmedName,
-            quarter: 1,
-            stats: { people: 60, law: 60, integrity: 60, reform: 60 },
-            status: 'waiting',
-            score: 60,
-            rankTitle: 'Ứng viên',
-            lastSeen: Date.now()
-          };
+            reason: 'NICKNAME_TAKEN',
+            message: `Nickname "${trimmedName}" đã có người sử dụng trong phòng. Vui lòng chọn Nickname khác!`
+          });
+          return;
+        }
 
-          if (isBrandNew) {
+        setPlayers((prev) => {
+          const next = { ...prev };
+
+          if (next[data.playerId]) {
+            // Heartbeat update from existing player
+            next[data.playerId] = {
+              ...next[data.playerId],
+              name: trimmedName,
+              lastSeen: Date.now()
+            };
+          } else {
+            // Brand new player
+            next[data.playerId] = {
+              name: trimmedName,
+              quarter: 1,
+              stats: { people: 60, law: 60, integrity: 60, reform: 60 },
+              status: 'waiting',
+              score: 60,
+              rankTitle: 'Ứng viên',
+              lastSeen: Date.now()
+            };
             playSound('select');
           }
+
+          playersRef.current = next;
+          sessionRef.current?.publishRetainedState('lobby');
           return next;
         });
       } else if (data.type === 'PLAYER_LEAVE') {
@@ -296,6 +333,8 @@ export default function LeaderboardRoom({
               }
             }
           }
+          playersRef.current = next;
+          sessionRef.current?.publishRetainedState(sessionRef.current?.status || 'lobby');
           return next;
         });
       } else if (data.type === 'PLAYER_PROGRESS') {
@@ -316,6 +355,7 @@ export default function LeaderboardRoom({
             score: data.score || 60,
             rankTitle: data.rankTitle || 'Cán bộ'
           };
+          playersRef.current = next;
           return next;
         });
       } else if (data.type === 'PLAYER_FINISH') {
@@ -336,6 +376,7 @@ export default function LeaderboardRoom({
             score: data.score,
             rankTitle: data.rankTitle
           };
+          playersRef.current = next;
           return next;
         });
       }
@@ -450,6 +491,15 @@ export default function LeaderboardRoom({
         return;
       }
 
+      // Pre-join duplicate nickname check
+      const targetLower = trimmedName.toLowerCase();
+      if (Array.isArray(check.takenNicknames) && check.takenNicknames.some(n => (n || '').toLowerCase() === targetLower)) {
+        playSound('stamp');
+        setJoinError(`Nickname "${trimmedName}" đã có người sử dụng trong phòng. Vui lòng chọn Nickname khác!`);
+        setIsVerifyingRoom(false);
+        return;
+      }
+
       const activeCode = check.code || trimmedCode;
       setRoomCode(activeCode);
       setMode('join');
@@ -473,6 +523,16 @@ export default function LeaderboardRoom({
       // Listen for Host signals
       sessionStartHandledRef.current = false;
       session.onMessage((data) => {
+        if (data.type === 'PLAYER_JOIN_REJECTED' && data.playerId === playerId) {
+          if (sessionRef.current) {
+            sessionRef.current.close();
+            sessionRef.current = null;
+          }
+          setMode('select');
+          setJoinError(data.message || `Nickname "${trimmedName}" đã có người sử dụng trong phòng. Vui lòng chọn Nickname khác!`);
+          playSound('stamp');
+          return;
+        }
         if (data.type === 'SESSION_START') {
           handleTriggerStudentStartGame(data.sessionId || check.sessionId);
         } else if (data.type === 'SESSION_END') {
@@ -580,28 +640,17 @@ export default function LeaderboardRoom({
         {/* Top Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-200">
           <div className="flex items-center gap-2.5">
-            {mode !== 'select' && !isSessionEndedByHost && mode !== 'summary' && (
+            {mode !== 'select' && (
               <button
                 onClick={() => {
                   if (mode === 'host') {
                     handleHostCloseRoom();
                     return;
                   }
-                  if (sessionRef.current) {
-                    if (mode === 'join') {
-                      sessionRef.current.broadcast({
-                        type: 'PLAYER_LEAVE',
-                        playerId,
-                        name: playerName.trim()
-                      });
-                    }
-                    sessionRef.current.close();
-                    sessionRef.current = null;
-                  }
-                  setMode('select');
+                  resetToSelectMode();
                 }}
                 className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors mr-0.5"
-                title="Quay lại"
+                title="Quay lại sảnh"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
@@ -822,12 +871,21 @@ export default function LeaderboardRoom({
                   onClick={onClose}
                   className="w-full sm:flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
                 >
-                  Xem Lại Báo Cáo Nhiệm Kỳ Cá Nhân
+                  Xem Lại Báo Cáo Cá Nhân
+                </button>
+                <button
+                  onClick={() => {
+                    resetToSelectMode();
+                  }}
+                  className="w-full sm:w-auto py-2.5 px-4 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Vào phòng đấu khác</span>
                 </button>
                 {onLeaveMultiplayer && (
                   <button
                     onClick={() => {
-                      onLeaveMultiplayer();
+                      resetToSelectMode();
                       onClose();
                     }}
                     className="w-full sm:w-auto py-2.5 px-4 bg-white hover:bg-slate-50 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5"

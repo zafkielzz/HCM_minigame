@@ -152,7 +152,13 @@ export async function verifyRoom(roomCode) {
         try { if (client) client.end(true); } catch (e) {}
         // Fallback: If local room exists in lobby, accept it
         if (localRoom && localRoom.status === 'lobby') {
-          resolve({ valid: true, code, status: 'lobby', sessionId: localRoom.sessionId });
+          resolve({
+            valid: true,
+            code,
+            status: 'lobby',
+            sessionId: localRoom.sessionId,
+            takenNicknames: []
+          });
         } else {
           resolve({
             valid: false,
@@ -223,7 +229,8 @@ export async function verifyRoom(roomCode) {
               valid: true,
               code,
               status: 'lobby',
-              sessionId: data.sessionId
+              sessionId: data.sessionId,
+              takenNicknames: Array.isArray(data.takenNicknames) ? data.takenNicknames : []
             });
             return;
           }
@@ -236,7 +243,13 @@ export async function verifyRoom(roomCode) {
           clearTimeout(timeoutTimer);
           try { client.end(true); } catch (e) {}
           if (localRoom && localRoom.status === 'lobby') {
-            resolve({ valid: true, code, status: 'lobby', sessionId: localRoom.sessionId });
+            resolve({
+              valid: true,
+              code,
+              status: 'lobby',
+              sessionId: localRoom.sessionId,
+              takenNicknames: []
+            });
           } else {
             resolve({
               valid: false,
@@ -272,6 +285,7 @@ export class MultiplayerSession {
     this.heartbeatTimer = null;
     this.closed = false;
     this.sessionStartFired = false; // Guard: only fire SESSION_START once per session
+    this.extraStateProvider = null;
 
     this.init();
   }
@@ -397,14 +411,20 @@ export class MultiplayerSession {
     } catch (e) {}
   }
 
-  publishRetainedState(status) {
+  setExtraStateProvider(fn) {
+    this.extraStateProvider = fn;
+  }
+
+  publishRetainedState(status, extra = null) {
     if (!this.mqttClient || !this.mqttClient.connected) return;
     try {
+      const extraData = extra || (this.extraStateProvider ? this.extraStateProvider() : {});
       const payload = JSON.stringify({
         code: this.roomCode,
         sessionId: this.sessionId,
         status: status,
-        hostTime: Date.now()
+        hostTime: Date.now(),
+        ...extraData
       });
       this.mqttClient.publish(`hcm/v2/room/${this.roomCode}/state`, payload, { retain: true, qos: 0 });
     } catch (e) {}
@@ -424,7 +444,7 @@ export class MultiplayerSession {
       }
       this.notify(data);
     } else {
-      // Student handles Host control signals (SESSION_START, SESSION_END, ROOM_STATE, ROOM_CLOSED)
+      // Student handles Host control signals (SESSION_START, SESSION_END, ROOM_STATE, ROOM_CLOSED, PLAYER_JOIN_REJECTED)
       // For student, Host is authoritative for this.roomCode: always sync sessionId and status
       if (data.sessionId) {
         this.sessionId = data.sessionId;
@@ -446,7 +466,8 @@ export class MultiplayerSession {
         this.notify(data);
       } else if (
         data.type === 'SESSION_END' ||
-        data.type === 'ROOM_CLOSED'
+        data.type === 'ROOM_CLOSED' ||
+        data.type === 'PLAYER_JOIN_REJECTED'
       ) {
         this.notify(data);
       }

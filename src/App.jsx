@@ -121,19 +121,24 @@ export default function App() {
     handleRestart(sessionData.roomCode);
   };
 
-  // Leave multiplayer session and return to solo
+  // Leave multiplayer session and return to intro/home
   const handleLeaveMultiplayer = () => {
     if (multiplayerContext?.session) {
-      multiplayerContext.session.broadcast({
-        type: 'PLAYER_LEAVE',
-        playerId: multiplayerContext.playerId,
-        name: multiplayerContext.playerName
-      });
-      multiplayerContext.session.close();
+      try {
+        multiplayerContext.session.broadcast({
+          type: 'PLAYER_LEAVE',
+          playerId: multiplayerContext.playerId,
+          name: multiplayerContext.playerName
+        });
+        multiplayerContext.session.close();
+      } catch (e) {}
     }
     setMultiplayerContext(null);
     setIsSessionEndedByHost(false);
-    handleRestart(null);
+    setSyncedLeaderboardPlayers([]);
+    setCurrentResult(null);
+    setActiveEnding(null);
+    setGameStatus('intro');
   };
 
   // Request go home (prompts confirmation if active)
@@ -145,15 +150,18 @@ export default function App() {
   // Confirm go home
   const handleConfirmGoHome = () => {
     if (multiplayerContext?.session) {
-      multiplayerContext.session.broadcast({
-        type: 'PLAYER_LEAVE',
-        playerId: multiplayerContext.playerId,
-        name: multiplayerContext.playerName
-      });
-      multiplayerContext.session.close();
+      try {
+        multiplayerContext.session.broadcast({
+          type: 'PLAYER_LEAVE',
+          playerId: multiplayerContext.playerId,
+          name: multiplayerContext.playerName
+        });
+        multiplayerContext.session.close();
+      } catch (e) {}
     }
     setMultiplayerContext(null);
     setIsSessionEndedByHost(false);
+    setSyncedLeaderboardPlayers([]);
     setDilemmas(getShuffledDilemmas(null));
     setCurrentQuarter(1);
     setStats(INITIAL_STATS);
