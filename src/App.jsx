@@ -166,8 +166,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-3 sm:p-5 relative overflow-x-hidden">
-      {/* Main Container: Expanded to max-w-5xl for 3-column cockpit layout */}
-      <div className="w-full max-w-5xl mx-auto flex-1 flex flex-col justify-between relative z-10">
+      {/* Main Container: Expanded to max-w-7xl for wide spacious 3-column cockpit layout */}
+      <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between relative z-10">
         {gameStatus === 'intro' ? (
           <div className="my-auto max-w-lg mx-auto w-full">
             <IntroScreen 

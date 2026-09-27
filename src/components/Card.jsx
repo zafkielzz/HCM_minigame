@@ -76,18 +76,18 @@ export default function Card({ dilemma, onMakeChoice }) {
   const isRight = dragOffset.x > 20;
 
   return (
-    <div className="relative w-full max-w-5xl mx-auto flex flex-col items-center select-none px-2">
+    <div className="relative w-full max-w-6xl xl:max-w-7xl mx-auto flex flex-col items-center select-none px-2 sm:px-4">
       {/* Mobile Top Active Banner (shown on mobile when dragging) */}
-      <div className="md:hidden w-full h-20 flex items-center justify-center mb-2 text-center">
+      <div className="md:hidden w-full h-24 flex items-center justify-center mb-2 text-center">
         {isLeft ? (
-          <div className="w-full bg-emerald-950/95 border-2 border-emerald-500 text-emerald-100 text-xs sm:text-sm font-medium py-2 px-3 rounded-xl shadow-lg text-left transition-all">
+          <div className="w-full bg-emerald-950/95 border-2 border-emerald-500 text-emerald-100 text-xs sm:text-sm font-medium py-2.5 px-3.5 rounded-xl shadow-lg text-left transition-all">
             <span className="text-emerald-400 font-bold block text-[11px] uppercase tracking-wider mb-0.5">
               ← Phương án A
             </span>
             <span className="leading-snug">{dilemma.leftChoice.text}</span>
           </div>
         ) : isRight ? (
-          <div className="w-full bg-blue-950/95 border-2 border-blue-500 text-blue-100 text-xs sm:text-sm font-medium py-2 px-3 rounded-xl shadow-lg text-right transition-all">
+          <div className="w-full bg-blue-950/95 border-2 border-blue-500 text-blue-100 text-xs sm:text-sm font-medium py-2.5 px-3.5 rounded-xl shadow-lg text-right transition-all">
             <span className="text-blue-400 font-bold block text-[11px] uppercase tracking-wider mb-0.5">
               Phương án B →
             </span>
@@ -100,32 +100,32 @@ export default function Card({ dilemma, onMakeChoice }) {
         )}
       </div>
 
-      {/* Main 3-Column Split Layout: Option A on Left, Card in Center, Option B on Right */}
-      <div className="w-full flex items-center justify-center gap-4 sm:gap-6">
+      {/* Main 3-Column Split Cockpit: Spacious Left Block, Center Card, Spacious Right Block */}
+      <div className="w-full flex items-center justify-between gap-4 lg:gap-8">
         
-        {/* LEFT PANEL: PHƯƠNG ÁN A (Xanh Lá Cây - Highlights when dragging Left) */}
+        {/* LEFT PANEL: PHƯƠNG ÁN A (Expanded size, comfortable width, fewer lines) */}
         <div 
-          className={`hidden md:flex flex-1 flex-col justify-between p-5 sm:p-6 rounded-3xl border-2 transition-all duration-200 min-h-[460px] sm:min-h-[500px] text-left shadow-lg ${
+          className={`hidden md:flex flex-1 flex-col justify-between p-7 lg:p-8 xl:p-9 rounded-3xl border-2 transition-all duration-200 min-h-[480px] sm:min-h-[510px] text-left shadow-xl ${
             isLeft 
               ? 'bg-emerald-950/95 border-emerald-400 text-emerald-100 scale-[1.03] shadow-emerald-950/80 ring-2 ring-emerald-500/40 opacity-100 translate-x-1'
-              : 'bg-slate-900/60 border-slate-800 text-slate-400 opacity-60'
+              : 'bg-slate-900/70 border-slate-800 text-slate-400 opacity-65 hover:opacity-90'
           }`}
         >
           <div>
-            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-800/80">
-              <span className={`text-xs font-black uppercase tracking-wider ${isLeft ? 'text-emerald-300' : 'text-slate-400'}`}>
+            <div className="flex items-center gap-2 mb-4 pb-2.5 border-b border-slate-800">
+              <span className={`text-xs sm:text-sm font-black uppercase tracking-wider ${isLeft ? 'text-emerald-300' : 'text-slate-400'}`}>
                 ← PHƯƠNG ÁN A
               </span>
             </div>
 
-            <p className={`text-base sm:text-lg font-semibold leading-relaxed transition-colors ${
-              isLeft ? 'text-emerald-100 font-bold' : 'text-slate-300'
+            <p className={`text-base sm:text-lg xl:text-xl font-semibold leading-relaxed transition-colors ${
+              isLeft ? 'text-emerald-50 font-bold' : 'text-slate-200'
             }`}>
               "{dilemma.leftChoice.text}"
             </p>
           </div>
 
-          <div className="pt-3 border-t border-slate-800/60 text-xs">
+          <div className="pt-4 border-t border-slate-800 text-xs sm:text-sm">
             {isLeft ? (
               <span className="text-emerald-300 font-bold uppercase tracking-wide flex items-center gap-1.5 animate-pulse">
                 ✓ Thả chuột để chốt Phương án A
@@ -138,8 +138,8 @@ export default function Card({ dilemma, onMakeChoice }) {
           </div>
         </div>
 
-        {/* CENTER: PHYSICAL REIGNS CARD */}
-        <div className="w-full max-w-sm sm:max-w-md shrink-0">
+        {/* CENTER: PHYSICAL REIGNS PORTRAIT CARD */}
+        <div className="w-full max-w-[330px] sm:max-w-[360px] shrink-0">
           <div
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
@@ -147,7 +147,7 @@ export default function Card({ dilemma, onMakeChoice }) {
               transform: `translate3d(${dragOffset.x}px, ${dragOffset.y}px, 0px) rotate(${rotation}deg)`,
               transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
             }}
-            className="w-full cursor-grab active:cursor-grabbing relative select-none rounded-3xl bg-slate-900 border-2 border-slate-700 shadow-2xl p-6 sm:p-7 overflow-hidden flex flex-col justify-between min-h-[460px] sm:min-h-[500px]"
+            className="w-full cursor-grab active:cursor-grabbing relative select-none rounded-3xl bg-slate-900 border-2 border-slate-700 shadow-2xl p-6 sm:p-7 overflow-hidden flex flex-col justify-between min-h-[480px] sm:min-h-[510px]"
           >
             {/* Crisp Stamps */}
             {dragOffset.x < -30 && (
@@ -166,7 +166,7 @@ export default function Card({ dilemma, onMakeChoice }) {
               <span className="text-xs sm:text-sm font-black text-red-400 uppercase tracking-wide">
                 {dilemma.quarter}
               </span>
-              <span className="text-xs font-semibold text-slate-300 px-2.5 py-0.5 rounded-lg bg-slate-800 border border-slate-700 truncate max-w-[200px]">
+              <span className="text-xs font-semibold text-slate-300 px-2.5 py-0.5 rounded-lg bg-slate-800 border border-slate-700 truncate max-w-[170px]">
                 {dilemma.category}
               </span>
             </div>
@@ -187,7 +187,7 @@ export default function Card({ dilemma, onMakeChoice }) {
               </span>
 
               {/* Dialogue / Situation text */}
-              <p className="font-serif text-slate-200 text-base sm:text-lg leading-relaxed text-center px-1">
+              <p className="font-serif text-slate-200 text-sm sm:text-base leading-relaxed text-center px-1">
                 "{dilemma.situation}"
               </p>
             </div>
@@ -200,29 +200,29 @@ export default function Card({ dilemma, onMakeChoice }) {
           </div>
         </div>
 
-        {/* RIGHT PANEL: PHƯƠNG ÁN B (Xanh Lam - Highlights when dragging Right) */}
+        {/* RIGHT PANEL: PHƯƠNG ÁN B (Expanded size, comfortable width, fewer lines) */}
         <div 
-          className={`hidden md:flex flex-1 flex-col justify-between p-5 sm:p-6 rounded-3xl border-2 transition-all duration-200 min-h-[460px] sm:min-h-[500px] text-right shadow-lg ${
+          className={`hidden md:flex flex-1 flex-col justify-between p-7 lg:p-8 xl:p-9 rounded-3xl border-2 transition-all duration-200 min-h-[480px] sm:min-h-[510px] text-right shadow-xl ${
             isRight 
               ? 'bg-blue-950/95 border-blue-400 text-blue-100 scale-[1.03] shadow-blue-950/80 ring-2 ring-blue-500/40 opacity-100 -translate-x-1'
-              : 'bg-slate-900/60 border-slate-800 text-slate-400 opacity-60'
+              : 'bg-slate-900/70 border-slate-800 text-slate-400 opacity-65 hover:opacity-90'
           }`}
         >
           <div>
-            <div className="flex items-center justify-end gap-2 mb-3 pb-2 border-b border-slate-800/80">
-              <span className={`text-xs font-black uppercase tracking-wider ${isRight ? 'text-blue-300' : 'text-slate-400'}`}>
+            <div className="flex items-center justify-end gap-2 mb-4 pb-2.5 border-b border-slate-800">
+              <span className={`text-xs sm:text-sm font-black uppercase tracking-wider ${isRight ? 'text-blue-300' : 'text-slate-400'}`}>
                 PHƯƠNG ÁN B →
               </span>
             </div>
 
-            <p className={`text-base sm:text-lg font-semibold leading-relaxed transition-colors ${
-              isRight ? 'text-blue-100 font-bold' : 'text-slate-300'
+            <p className={`text-base sm:text-lg xl:text-xl font-semibold leading-relaxed transition-colors ${
+              isRight ? 'text-blue-50 font-bold' : 'text-slate-200'
             }`}>
               "{dilemma.rightChoice.text}"
             </p>
           </div>
 
-          <div className="pt-3 border-t border-slate-800/60 text-xs">
+          <div className="pt-4 border-t border-slate-800 text-xs sm:text-sm">
             {isRight ? (
               <span className="text-blue-300 font-bold uppercase tracking-wide flex items-center justify-end gap-1.5 animate-pulse">
                 ✓ Thả chuột để chốt Phương án B
