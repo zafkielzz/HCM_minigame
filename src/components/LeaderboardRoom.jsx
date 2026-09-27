@@ -247,9 +247,15 @@ export default function LeaderboardRoom({
           return next;
         });
       } else if (data.type === 'PLAYER_PROGRESS') {
-        setPlayers((prev) => ({
-          ...prev,
-          [data.playerId]: {
+        setPlayers((prev) => {
+          const next = { ...prev };
+          const cleanName = (data.name || '').trim().toLowerCase();
+          for (const [id, p] of Object.entries(next)) {
+            if (id !== data.playerId && p.name && p.name.trim().toLowerCase() === cleanName) {
+              delete next[id];
+            }
+          }
+          next[data.playerId] = {
             ...(prev[data.playerId] || {}),
             name: data.name,
             quarter: data.quarter,
@@ -257,12 +263,19 @@ export default function LeaderboardRoom({
             status: data.status,
             score: data.score || 60,
             rankTitle: data.rankTitle || 'Cán bộ'
-          }
-        }));
+          };
+          return next;
+        });
       } else if (data.type === 'PLAYER_FINISH') {
-        setPlayers((prev) => ({
-          ...prev,
-          [data.playerId]: {
+        setPlayers((prev) => {
+          const next = { ...prev };
+          const cleanName = (data.name || '').trim().toLowerCase();
+          for (const [id, p] of Object.entries(next)) {
+            if (id !== data.playerId && p.name && p.name.trim().toLowerCase() === cleanName) {
+              delete next[id];
+            }
+          }
+          next[data.playerId] = {
             ...(prev[data.playerId] || {}),
             name: data.name,
             quarter: data.quartersSurvived,
@@ -270,8 +283,9 @@ export default function LeaderboardRoom({
             status: data.quartersSurvived >= 16 ? 'finished' : 'failed',
             score: data.score,
             rankTitle: data.rankTitle
-          }
-        }));
+          };
+          return next;
+        });
       }
     });
   };
