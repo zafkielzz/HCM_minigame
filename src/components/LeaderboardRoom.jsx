@@ -375,6 +375,24 @@ export default function LeaderboardRoom({
                   >
                     {copiedCode ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                   </button>
+                  {hostPhase === 'lobby' && (
+                    <button
+                      onClick={() => {
+                        const nextCode = generateRoomCode(true);
+                        setRoomCode(nextCode);
+                        if (sessionRef.current) sessionRef.current.close();
+                        const newSession = new MultiplayerSession(nextCode, true);
+                        newSession.setStatus('lobby');
+                        sessionRef.current = newSession;
+                        setPlayers({});
+                      }}
+                      className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs transition-colors shadow-sm flex items-center gap-1 font-sans"
+                      title="Đổi mã phòng khác (HCM24, HCM60, HCM88...)"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="text-[10px] font-bold">Đổi mã</span>
+                    </button>
+                  )}
                 </div>
               </div>
 

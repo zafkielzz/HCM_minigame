@@ -1,12 +1,27 @@
 // Real-time synchronization utility for classroom multiplayer competition
 // Utilizes browser BroadcastChannel + localStorage storage event bus + public HTTPS SSE (ntfy.sh)
-// Hardcoded dedicated classroom room code: 1945 (Chỉ toàn số, không ký tự đặc biệt)
+// Alphanumeric room codes with 'HCM' prefix (e.g. HCM1945, HCM24, HCM88, HCM60)
 
-export const DEFAULT_HOST_ROOM_CODE = '1945';
-export const VALID_ROOM_CODES = new Set(['1945', 'HCM', 'HCM24', 'HCM1945']);
+export const DEFAULT_HOST_ROOM_CODE = 'HCM1945';
+export const VALID_ROOM_CODES = new Set(['HCM1945', 'HCM24', 'HCM60', 'HCM88', 'HCM01', 'HCM02', 'HCM']);
 
 const BASE_TOPIC_PREFIX = 'hcm-vibe-';
 const STORAGE_KEY_ROOMS = 'hcm_active_rooms';
+
+/**
+ * Normalizes user input room code:
+ * - Strips whitespace, special symbols and hyphens
+ * - Automatically prepends 'HCM' if only numbers were entered (e.g. '1945' -> 'HCM1945', '24' -> 'HCM24')
+ * - Uppercases letters (e.g. 'hcm1945' -> 'HCM1945')
+ */
+export function normalizeRoomCode(input) {
+  let clean = (input || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!clean) return '';
+  if (!clean.startsWith('HCM') && /^\d+$/.test(clean)) {
+    clean = 'HCM' + clean;
+  }
+  return clean;
+}
 
 /**
  * Retrieves the registry of active rooms from localStorage.
@@ -34,7 +49,7 @@ export function getActiveRooms() {
  */
 export function registerHostRoom(roomCode = DEFAULT_HOST_ROOM_CODE, status = 'lobby') {
   try {
-    const code = roomCode.trim().toUpperCase();
+    const code = normalizeRoomCode(roomCode);
     const rooms = getActiveRooms();
     rooms[code] = {
       code,
@@ -52,7 +67,7 @@ export function registerHostRoom(roomCode = DEFAULT_HOST_ROOM_CODE, status = 'lo
  */
 export function updateHostRoomStatus(roomCode = DEFAULT_HOST_ROOM_CODE, status) {
   try {
-    const code = roomCode.trim().toUpperCase();
+    const code = normalizeRoomCode(roomCode);
     const rooms = getActiveRooms();
     if (rooms[code]) {
       rooms[code].status = status;
@@ -69,7 +84,7 @@ export function updateHostRoomStatus(roomCode = DEFAULT_HOST_ROOM_CODE, status) 
  */
 export function unregisterHostRoom(roomCode = DEFAULT_HOST_ROOM_CODE) {
   try {
-    const code = roomCode.trim().toUpperCase();
+    const code = normalizeRoomCode(roomCode);
     const rooms = getActiveRooms();
     delete rooms[code];
     localStorage.setItem(STORAGE_KEY_ROOMS, JSON.stringify(rooms));
@@ -80,23 +95,24 @@ export function unregisterHostRoom(roomCode = DEFAULT_HOST_ROOM_CODE) {
 
 /**
  * Verifies if a room code is valid.
- * - Dedicated room code: 1945 (Chỉ số, mang ý nghĩa lịch sử Tuyên ngôn Độc lập)
- * - Returns { valid: true, code } if correct, or { valid: false, message } if incorrect.
+ * - Accepts HCM prefix + numbers (e.g. HCM1945, HCM24, or student typing 1945)
+ * - Returns { valid: true, code } or { valid: false, message }
  */
 export function verifyRoom(roomCode) {
-  const code = (roomCode || '').trim().toUpperCase();
+  const code = normalizeRoomCode(roomCode);
   if (!code) {
     return { valid: false, message: 'Vui lòng nhập Mã phòng.' };
   }
 
-  const isHardcodedValid = VALID_ROOM_CODES.has(code);
+  // Must match format HCM + digits (e.g. HCM1945, HCM24) or known valid codes
+  const isFormatValid = /^HCM\d+$/.test(code) || VALID_ROOM_CODES.has(code);
   const localRooms = getActiveRooms();
   const isRegisteredValid = Boolean(localRooms[code]);
 
-  if (!isHardcodedValid && !isRegisteredValid) {
+  if (!isFormatValid && !isRegisteredValid) {
     return { 
       valid: false, 
-      message: `Mã phòng không chính xác! Vui lòng nhập đúng mã phòng trên máy chiếu (${DEFAULT_HOST_ROOM_CODE}).` 
+      message: `Mã phòng không đúng định dạng (Ví dụ: ${DEFAULT_HOST_ROOM_CODE} hoặc HCM24)!` 
     };
   }
 
@@ -116,13 +132,14 @@ export function verifyRoom(roomCode) {
 
 export class MultiplayerSession {
   constructor(roomCode = DEFAULT_HOST_ROOM_CODE, isHost = false) {
-    this.roomCode = roomCode.trim().toUpperCase();
+    this.roomCode = normalizeRoomCode(roomCode) || DEFAULT_HOST_ROOM_CODE;
     this.isHost = isHost;
     this.status = isHost ? 'lobby' : null;
     this.topic = `${BASE_TOPIC_PREFIX}${this.roomCode.toLowerCase()}`;
     this.eventSource = null;
     this.broadcastChannel = null;
     this.storageListener = null;
+    this.visibilityHandler = null;
     this.listeners = [];
 
     this.init();
@@ -134,7 +151,7 @@ export class MultiplayerSession {
       if (typeof window !== 'undefined' && window.BroadcastChannel) {
         this.broadcastChannel = new BroadcastChannel(`hcm-channel-${this.roomCode}`);
         this.broadcastChannel.onmessage = (event) => {
-          this.notify(event.data);
+          this.handleIncoming(event.data);
         };
       }
     } catch (e) {
@@ -149,7 +166,7 @@ export class MultiplayerSession {
             try {
               const payload = JSON.parse(e.newValue);
               if (payload) {
-                this.notify(payload);
+                this.handleIncoming(payload);
               }
             } catch (err) {}
           }
@@ -161,7 +178,26 @@ export class MultiplayerSession {
     }
 
     // 3. Setup Server-Sent Events (SSE) via ntfy.sh for cross-device internet sync
+    this.connectSSE();
+
+    // 4. Auto-reconnect SSE when phone wakes up from lock screen
+    if (typeof document !== 'undefined') {
+      this.visibilityHandler = () => {
+        if (!document.hidden) {
+          if (!this.eventSource || this.eventSource.readyState === EventSource.CLOSED) {
+            this.connectSSE();
+          }
+        }
+      };
+      document.addEventListener('visibilitychange', this.visibilityHandler);
+    }
+  }
+
+  connectSSE() {
     try {
+      if (this.eventSource) {
+        try { this.eventSource.close(); } catch (e) {}
+      }
       const sseUrl = `https://ntfy.sh/${this.topic}/sse`;
       this.eventSource = new EventSource(sseUrl);
 
@@ -170,7 +206,7 @@ export class MultiplayerSession {
           const envelope = JSON.parse(event.data);
           if (envelope.message) {
             const payload = JSON.parse(envelope.message);
-            this.notify(payload);
+            this.handleIncoming(payload);
           }
         } catch (err) {}
       };
@@ -179,6 +215,21 @@ export class MultiplayerSession {
         // SSE connection retry suppressed
       };
     } catch (e) {}
+  }
+
+  // Optimize traffic for 60 students:
+  // Student phones ONLY care about Host control signals (SESSION_START, SESSION_END)
+  // Ignoring the other 59 students' progress updates eliminates 98% of mobile CPU & network load!
+  handleIncoming(data) {
+    if (!data) return;
+
+    if (!this.isHost) {
+      if (data.type !== 'SESSION_START' && data.type !== 'SESSION_END') {
+        return; // Ignore other students' progress on student phone
+      }
+    }
+
+    this.notify(data);
   }
 
   setStatus(status) {
@@ -238,6 +289,10 @@ export class MultiplayerSession {
     if (this.isHost) {
       unregisterHostRoom(this.roomCode);
     }
+    if (this.visibilityHandler && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+      this.visibilityHandler = null;
+    }
     if (this.storageListener && typeof window !== 'undefined') {
       window.removeEventListener('storage', this.storageListener);
       this.storageListener = null;
@@ -254,7 +309,13 @@ export class MultiplayerSession {
   }
 }
 
-// Generate room code: Always returns dedicated clean room code '1945'
-export function generateRoomCode() {
-  return DEFAULT_HOST_ROOM_CODE;
+// Generate room code: Defaults to 'HCM1945' with ability to cycle other codes
+const ROOM_SUITE = ['HCM1945', 'HCM24', 'HCM60', 'HCM88', 'HCM01', 'HCM02'];
+let currentSuiteIndex = 0;
+
+export function generateRoomCode(cycleNext = false) {
+  if (cycleNext) {
+    currentSuiteIndex = (currentSuiteIndex + 1) % ROOM_SUITE.length;
+  }
+  return ROOM_SUITE[currentSuiteIndex];
 }
