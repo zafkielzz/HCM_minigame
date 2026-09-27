@@ -1,16 +1,30 @@
-import React from 'react';
-import { ArrowRight, BookOpen, CheckCircle2, AlertCircle, Quote } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { ArrowRight, BookOpen, Quote, CornerDownLeft } from 'lucide-react';
 import { playSound } from '../utils/sound';
 
 export default function ConsequenceModal({ result, onContinue }) {
+  // Support quick advance with Enter or Spacebar
+  useEffect(() => {
+    if (!result) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        playSound('select');
+        onContinue();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [result, onContinue]);
+
   if (!result) return null;
 
   const { choiceKey, choice, dilemma, impact } = result;
   const isLeft = choiceKey === 'left';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-lg bg-white border-2 border-slate-200 rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col justify-between max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
+      <div className="w-full max-w-lg bg-white border-2 border-slate-200 rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col justify-between max-h-[90vh] overflow-y-auto animate-scaleUp">
         <div>
           {/* Header Tag */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-200">
@@ -82,16 +96,20 @@ export default function ConsequenceModal({ result, onContinue }) {
           </div>
         </div>
 
-        {/* Continue Button */}
+        {/* Continue Button with Keyboard hint */}
         <button
           onClick={() => {
             playSound('select');
             onContinue();
           }}
-          className="mt-5 w-full py-3.5 px-6 rounded-2xl font-bold text-sm uppercase tracking-wider bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/20 flex items-center justify-center gap-2 group transition-all"
+          className="mt-5 w-full py-3.5 px-6 rounded-2xl font-bold text-sm uppercase tracking-wider bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/20 flex items-center justify-center gap-2 group transition-all cursor-pointer"
         >
           <span>Tiếp tục phiên công vụ</span>
-          <ArrowRight className="w-4 h-4 stroke-[3] group-hover:translate-x-1 transition-transform" />
+          <span className="text-[11px] font-mono opacity-80 flex items-center gap-0.5">
+            <CornerDownLeft className="w-3.5 h-3.5" />
+            <span>[Enter]</span>
+          </span>
+          <ArrowRight className="w-4 h-4 stroke-[3] group-hover:translate-x-1 transition-transform ml-1" />
         </button>
       </div>
     </div>

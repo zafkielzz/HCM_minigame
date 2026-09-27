@@ -7,6 +7,7 @@ import EndScreen from './components/EndScreen';
 import IntroScreen from './components/IntroScreen';
 import HandbookModal from './components/HandbookModal';
 import LeaderboardRoom from './components/LeaderboardRoom';
+import ConfirmModal from './components/ConfirmModal';
 
 import { DILEMMAS } from './data/dilemmas';
 import { ENDINGS, getTitleByPerformance } from './data/endings';
@@ -29,6 +30,7 @@ export default function App() {
   const [isHandbookOpen, setIsHandbookOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [isConfirmHomeOpen, setIsConfirmHomeOpen] = useState(false);
 
   // Multiplayer session context (if joined a room)
   const [multiplayerContext, setMultiplayerContext] = useState(null); // { session, playerId, playerName, roomCode }
@@ -74,6 +76,27 @@ export default function App() {
     setMultiplayerContext(null);
     setIsSessionEndedByHost(false);
     handleRestart();
+  };
+
+  // Request go home (prompts confirmation if active)
+  const handleRequestGoHome = () => {
+    if (gameStatus === 'intro') return;
+    setIsConfirmHomeOpen(true);
+  };
+
+  // Confirm go home
+  const handleConfirmGoHome = () => {
+    if (multiplayerContext?.session) {
+      multiplayerContext.session.close();
+    }
+    setMultiplayerContext(null);
+    setIsSessionEndedByHost(false);
+    setCurrentQuarter(1);
+    setStats(INITIAL_STATS);
+    setCurrentResult(null);
+    setActiveEnding(null);
+    setGameStatus('intro');
+    setIsConfirmHomeOpen(false);
   };
 
   // Calculate new stats and check game over
@@ -165,7 +188,19 @@ export default function App() {
   const currentDilemma = DILEMMAS[currentQuarter - 1] || DILEMMAS[0];
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-slate-800 flex flex-col justify-between p-3 sm:p-5 relative overflow-x-hidden">
+    <div className="min-h-screen text-slate-800 flex flex-col justify-between p-3 sm:p-5 relative overflow-x-hidden">
+      {/* National Emblem & Dong Son Bronze Drum Watermark Ambient Background */}
+      <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center overflow-hidden opacity-[0.04]">
+        <svg viewBox="0 0 500 500" className="w-[900px] h-[900px] max-w-none text-yellow-300 fill-current">
+          <circle cx="250" cy="250" r="230" stroke="currentColor" strokeWidth="4" fill="none" />
+          <circle cx="250" cy="250" r="185" stroke="currentColor" strokeWidth="2" strokeDasharray="8 6" fill="none" />
+          <circle cx="250" cy="250" r="140" stroke="currentColor" strokeWidth="3" fill="none" />
+          <circle cx="250" cy="250" r="85" stroke="currentColor" strokeWidth="2" strokeDasharray="6 4" fill="none" />
+          {/* 14-pointed Star motif */}
+          <polygon points="250,50 262,200 391,109 297,222 446,205 316,250 446,295 297,278 391,391 262,300 250,450 238,300 109,391 203,278 54,295 184,250 54,205 203,222 109,109 238,200" />
+        </svg>
+      </div>
+
       {/* Main Container: Expanded to max-w-7xl for wide spacious 3-column cockpit layout */}
       <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between relative z-10">
         {gameStatus === 'intro' ? (
@@ -202,6 +237,8 @@ export default function App() {
                 isMuted={isMuted}
                 onToggleMute={() => setIsMuted(!isMuted)}
                 onRestart={handleRestart}
+                onGoHome={handleRequestGoHome}
+                multiplayerContext={multiplayerContext}
               />
 
               <IndicatorBar
@@ -218,13 +255,16 @@ export default function App() {
             </main>
 
             {/* Bottom Tip for classroom */}
-            <footer className="text-center text-xs text-slate-500 py-1 flex items-center justify-center gap-2">
+            <footer className="text-center text-xs text-amber-200/90 py-1.5 flex items-center justify-center gap-2 font-medium">
               {multiplayerContext ? (
-                <span className="text-amber-700 font-bold">
-                  ● Đang thi đấu trong phòng [{multiplayerContext.roomCode}] • Thí sinh: {multiplayerContext.playerName}
+                <span className="bg-amber-400/20 text-amber-300 font-bold px-3 py-1 rounded-full border border-amber-400/30 shadow-sm flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Đang thi đấu phòng [{multiplayerContext.roomCode}] • Thí sinh: {multiplayerContext.playerName}</span>
                 </span>
               ) : (
-                <span>Kéo thẻ chuột sang bên trái (Phương án A) hoặc bên phải (Phương án B)</span>
+                <span className="bg-red-950/40 px-3.5 py-1 rounded-full border border-red-800/40 text-[11px] text-amber-100/80">
+                  Giáo trình Tư tưởng Hồ Chí Minh: Chương 4 • Môn học Chính trị Đại học
+                </span>
               )}
             </footer>
           </div>
@@ -250,6 +290,22 @@ export default function App() {
         currentQuarter={currentQuarter}
         stats={stats}
         onStartSoloWithSession={handleStartSoloWithSession}
+      />
+
+      {/* Navigation Confirm Modal */}
+      <ConfirmModal
+        isOpen={isConfirmHomeOpen}
+        title="Quay Về Trang Chủ?"
+        message={
+          multiplayerContext
+            ? `Bạn đang tham gia phòng thi đấu [${multiplayerContext.roomCode}] với tư cách là thí sinh "${multiplayerContext.playerName}". Rời phòng sẽ kết thúc phiên thi đấu này.`
+            : `Bạn có chắc chắn muốn quay về màn hình giới thiệu không? Tiến trình nhiệm kỳ hiện tại (Quý ${currentQuarter}/16) sẽ được cài đặt lại từ đầu.`
+        }
+        confirmText={multiplayerContext ? "Rời phòng & Về trang chủ" : "Về trang chủ"}
+        cancelText="Tiếp tục công vụ"
+        isDanger={Boolean(multiplayerContext)}
+        onConfirm={handleConfirmGoHome}
+        onCancel={() => setIsConfirmHomeOpen(false)}
       />
     </div>
   );
