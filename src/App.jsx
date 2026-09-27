@@ -165,7 +165,7 @@ export default function App() {
   const currentDilemma = DILEMMAS[currentQuarter - 1] || DILEMMAS[0];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-3 sm:p-5 relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#F8F9FA] text-slate-800 flex flex-col justify-between p-3 sm:p-5 relative overflow-x-hidden">
       {/* Main Container: Expanded to max-w-7xl for wide spacious 3-column cockpit layout */}
       <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between relative z-10">
         {gameStatus === 'intro' ? (
@@ -220,7 +220,7 @@ export default function App() {
             {/* Bottom Tip for classroom */}
             <footer className="text-center text-xs text-slate-500 py-1 flex items-center justify-center gap-2">
               {multiplayerContext ? (
-                <span className="text-amber-400 font-bold">
+                <span className="text-amber-700 font-bold">
                   ● Đang thi đấu trong phòng [{multiplayerContext.roomCode}] • Thí sinh: {multiplayerContext.playerName}
                 </span>
               ) : (

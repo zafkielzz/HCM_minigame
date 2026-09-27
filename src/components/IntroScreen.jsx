@@ -4,28 +4,28 @@ import { playSound } from '../utils/sound';
 
 export default function IntroScreen({ onStart, onOpenHandbook, onOpenLeaderboard }) {
   return (
-    <div className="w-full max-w-lg mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xl animate-fadeIn flex flex-col justify-between">
+    <div className="w-full max-w-lg mx-auto bg-white border-2 border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl animate-fadeIn flex flex-col justify-between">
       <div>
         {/* Emblem & Header */}
         <div className="text-center mb-4">
-          <div className="mx-auto w-14 h-14 rounded-2xl bg-red-700 text-yellow-300 flex items-center justify-center text-2xl font-black shadow-md border border-yellow-500/50 mb-2.5">
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-red-600 text-yellow-300 flex items-center justify-center text-3xl font-black shadow-lg shadow-red-200 border-2 border-yellow-400 mb-3">
             ★
           </div>
-          <span className="px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-red-950/80 text-red-300 border border-red-800/60 inline-block mb-1">
+          <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-red-100 text-red-800 border border-red-200 inline-block mb-1.5">
             Môn học Tư tưởng Hồ Chí Minh
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-100 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             GHẾ CÔNG BỘC
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
             Chương 4: Nhà nước của dân, do dân, vì dân & Cải cách hành chính
           </p>
         </div>
 
         {/* Story Intro */}
-        <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 text-xs sm:text-sm text-slate-300 leading-relaxed mb-4">
-          <p className="mb-1.5">
-            🏛️ <strong>Bối cảnh:</strong> Bạn được tín nhiệm bầu làm người đứng đầu chính quyền địa phương nhiệm kỳ 4 năm (16 Quý).
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-700 leading-relaxed mb-4">
+          <p className="mb-2">
+            🏛️ <strong>Bối cảnh:</strong> Bạn vừa được nhân dân tín nhiệm bầu vào cương vị người đứng đầu chính quyền địa phương nhiệm kỳ 4 năm (16 Quý).
           </p>
           <p>
             Mỗi quý, bạn phải giải quyết 1 sự vụ thực tế. Lựa chọn của bạn sẽ tác động trực tiếp đến 4 cán cân: <strong>Lòng Dân, Pháp Quyền, Liêm Chính</strong> và <strong>Cải Cách Hành Chính</strong>.
@@ -33,22 +33,22 @@ export default function IntroScreen({ onStart, onOpenHandbook, onOpenLeaderboard
         </div>
 
         {/* End Game Rules Clarification Box */}
-        <div className="bg-slate-950/90 p-4 rounded-xl border border-amber-500/30 mb-5 text-xs text-slate-300 space-y-2">
-          <div className="flex items-center gap-1.5 font-bold text-amber-300 text-xs uppercase tracking-wide">
-            <Trophy className="w-4 h-4 text-amber-400" />
+        <div className="bg-amber-50/90 p-4 rounded-2xl border border-amber-200 mb-5 text-xs text-amber-950 space-y-2">
+          <div className="flex items-center gap-1.5 font-black text-amber-900 text-xs uppercase tracking-wide">
+            <Trophy className="w-4 h-4 text-amber-600" />
             <span>Quy luật Thắng / Thua (Cơ chế End Game)</span>
           </div>
 
           <div className="space-y-1.5 leading-relaxed">
             <div className="flex items-start gap-2">
-              <span className="text-emerald-400 font-bold shrink-0">✓ Điều kiện Thắng:</span>
+              <span className="text-emerald-700 font-bold shrink-0">✓ Điều kiện Thắng:</span>
               <span>
                 <strong>Trụ vững qua trọn vẹn 16 Quý (4 năm nhiệm kỳ)</strong> mà không để bất kỳ chỉ số nào rơi về 0.
               </span>
             </div>
 
             <div className="flex items-start gap-2">
-              <span className="text-rose-400 font-bold shrink-0">✕ Điều kiện Thua:</span>
+              <span className="text-red-700 font-bold shrink-0">✕ Điều kiện Thua:</span>
               <span>
                 Bị cách chức hoặc bãi miễn ngay khi <strong>bất kỳ chỉ số nào chạm 0 điểm</strong>, hoặc mắc phải bẫy cực đoan (Bệnh "Mị dân" hay "Quan cách mạng").
               </span>
@@ -58,49 +58,49 @@ export default function IntroScreen({ onStart, onOpenHandbook, onOpenLeaderboard
 
         {/* 4 Indicators Mini Preview */}
         <div className="grid grid-cols-2 gap-2 text-left mb-5 text-xs">
-          <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-2">
-            <Users className="w-4 h-4 text-amber-400 shrink-0" />
-            <span className="text-slate-300 font-medium">Lòng Dân</span>
+          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2">
+            <Users className="w-4 h-4 text-amber-600 shrink-0" />
+            <span className="text-slate-800 font-bold">Lòng Dân</span>
           </div>
-          <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-2">
-            <Scale className="w-4 h-4 text-purple-400 shrink-0" />
-            <span className="text-slate-300 font-medium">Pháp Quyền</span>
+          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2">
+            <Scale className="w-4 h-4 text-purple-600 shrink-0" />
+            <span className="text-slate-800 font-bold">Pháp Quyền</span>
           </div>
-          <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span className="text-slate-300 font-medium">Liêm Chính</span>
+          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="text-slate-800 font-bold">Liêm Chính</span>
           </div>
-          <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-2">
-            <Zap className="w-4 h-4 text-blue-400 shrink-0" />
-            <span className="text-slate-300 font-medium">Cải Cách</span>
+          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2">
+            <Zap className="w-4 h-4 text-blue-600 shrink-0" />
+            <span className="text-slate-800 font-bold">Cải Cách</span>
           </div>
         </div>
       </div>
 
       {/* Buttons */}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         <button
           onClick={() => {
             playSound('select');
             onStart();
           }}
-          className="w-full py-3.5 px-5 rounded-xl font-bold text-sm uppercase tracking-wide bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md flex items-center justify-center gap-2 transition-colors"
+          className="w-full py-3.5 px-5 rounded-xl font-bold text-sm uppercase tracking-wide bg-red-600 hover:bg-red-700 text-white shadow-md flex items-center justify-center gap-2 transition-colors"
         >
-          <Play className="w-4 h-4 fill-slate-950" />
+          <Play className="w-4 h-4 fill-white" />
           <span>Bắt đầu chơi cá nhân</span>
         </button>
 
         <button
           onClick={onOpenLeaderboard}
-          className="w-full py-3 px-4 rounded-xl text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-950/40 hover:bg-amber-950/60 border border-amber-600/50 flex items-center justify-center gap-1.5 transition-colors"
+          className="w-full py-3 px-4 rounded-xl text-xs font-bold text-amber-900 hover:text-amber-950 bg-amber-100 hover:bg-amber-200 border border-amber-300 flex items-center justify-center gap-1.5 transition-colors shadow-sm"
         >
-          <Trophy className="w-4 h-4 text-amber-400" />
+          <Trophy className="w-4 h-4 text-amber-700" />
           <span>🏆 Vào Đấu Phòng Lớp Học (Thi đấu tập thể)</span>
         </button>
 
         <button
           onClick={onOpenHandbook}
-          className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-850 hover:bg-slate-800 border border-slate-800 flex items-center justify-center gap-1.5 transition-colors"
+          className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center justify-center gap-1.5 transition-colors"
         >
           <BookOpen className="w-4 h-4" />
           <span>Tra cứu Sổ tay Lý luận Chương 4</span>

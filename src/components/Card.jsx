@@ -76,70 +76,70 @@ export default function Card({ dilemma, onMakeChoice }) {
   const isRight = dragOffset.x > 20;
 
   return (
-    <div className="relative w-full max-w-6xl xl:max-w-7xl mx-auto flex flex-col items-center select-none px-2 sm:px-4">
+    <div className="relative w-full max-w-7xl mx-auto flex flex-col items-center select-none px-2 sm:px-4">
       {/* Mobile Top Active Banner (shown on mobile when dragging) */}
       <div className="md:hidden w-full h-24 flex items-center justify-center mb-2 text-center">
         {isLeft ? (
-          <div className="w-full bg-emerald-950/95 border-2 border-emerald-500 text-emerald-100 text-xs sm:text-sm font-medium py-2.5 px-3.5 rounded-xl shadow-lg text-left transition-all">
-            <span className="text-emerald-400 font-bold block text-[11px] uppercase tracking-wider mb-0.5">
+          <div className="w-full bg-emerald-50 border-2 border-emerald-600 text-emerald-950 text-xs sm:text-sm font-semibold py-2.5 px-3.5 rounded-xl shadow-md text-left transition-all">
+            <span className="text-emerald-700 font-bold block text-[11px] uppercase tracking-wider mb-0.5">
               ← Phương án A
             </span>
             <span className="leading-snug">{dilemma.leftChoice.text}</span>
           </div>
         ) : isRight ? (
-          <div className="w-full bg-blue-950/95 border-2 border-blue-500 text-blue-100 text-xs sm:text-sm font-medium py-2.5 px-3.5 rounded-xl shadow-lg text-right transition-all">
-            <span className="text-blue-400 font-bold block text-[11px] uppercase tracking-wider mb-0.5">
+          <div className="w-full bg-blue-50 border-2 border-blue-600 text-blue-950 text-xs sm:text-sm font-semibold py-2.5 px-3.5 rounded-xl shadow-md text-right transition-all">
+            <span className="text-blue-700 font-bold block text-[11px] uppercase tracking-wider mb-0.5">
               Phương án B →
             </span>
             <span className="leading-snug">{dilemma.rightChoice.text}</span>
           </div>
         ) : (
-          <div className="text-slate-400 text-xs tracking-wide">
-            ← Kéo sang trái (Phương án A) hoặc sang phải (Phương án B) →
+          <div className="text-slate-500 text-xs tracking-wide">
+            ← Kéo thẻ sang trái (Phương án A) hoặc sang phải (Phương án B) →
           </div>
         )}
       </div>
 
-      {/* Main 3-Column Split Cockpit: Spacious Left Block, Center Card, Spacious Right Block */}
-      <div className="w-full flex items-center justify-between gap-4 lg:gap-8">
+      {/* Main 3-Column Split Cockpit: Bright Civic Palette with Wide Center Card */}
+      <div className="w-full flex items-center justify-between gap-5 lg:gap-8">
         
-        {/* LEFT PANEL: PHƯƠNG ÁN A (Expanded size, comfortable width, fewer lines) */}
+        {/* LEFT PANEL: PHƯƠNG ÁN A (Spacious, Bright Emerald on Light theme) */}
         <div 
-          className={`hidden md:flex flex-1 flex-col justify-between p-7 lg:p-8 xl:p-9 rounded-3xl border-2 transition-all duration-200 min-h-[480px] sm:min-h-[510px] text-left shadow-xl ${
+          className={`hidden md:flex flex-1 flex-col justify-between p-7 lg:p-8 xl:p-9 rounded-3xl border-2 transition-all duration-200 min-h-[480px] sm:min-h-[520px] text-left shadow-sm ${
             isLeft 
-              ? 'bg-emerald-950/95 border-emerald-400 text-emerald-100 scale-[1.03] shadow-emerald-950/80 ring-2 ring-emerald-500/40 opacity-100 translate-x-1'
-              : 'bg-slate-900/70 border-slate-800 text-slate-400 opacity-65 hover:opacity-90'
+              ? 'bg-emerald-50 border-emerald-600 text-emerald-950 scale-[1.02] shadow-xl ring-2 ring-emerald-500/30 opacity-100 translate-x-1'
+              : 'bg-white border-slate-200 text-slate-700 opacity-65 hover:opacity-90 shadow-sm'
           }`}
         >
           <div>
-            <div className="flex items-center gap-2 mb-4 pb-2.5 border-b border-slate-800">
-              <span className={`text-xs sm:text-sm font-black uppercase tracking-wider ${isLeft ? 'text-emerald-300' : 'text-slate-400'}`}>
+            <div className="flex items-center gap-2 mb-4 pb-2.5 border-b border-slate-200">
+              <span className={`text-xs sm:text-sm font-black uppercase tracking-wider ${isLeft ? 'text-emerald-700' : 'text-slate-500'}`}>
                 ← PHƯƠNG ÁN A
               </span>
             </div>
 
             <p className={`text-base sm:text-lg xl:text-xl font-semibold leading-relaxed transition-colors ${
-              isLeft ? 'text-emerald-50 font-bold' : 'text-slate-200'
+              isLeft ? 'text-emerald-950 font-bold' : 'text-slate-800'
             }`}>
               "{dilemma.leftChoice.text}"
             </p>
           </div>
 
-          <div className="pt-4 border-t border-slate-800 text-xs sm:text-sm">
+          <div className="pt-4 border-t border-slate-200 text-xs sm:text-sm">
             {isLeft ? (
-              <span className="text-emerald-300 font-bold uppercase tracking-wide flex items-center gap-1.5 animate-pulse">
+              <span className="text-emerald-700 font-bold uppercase tracking-wide flex items-center gap-1.5 animate-pulse">
                 ✓ Thả chuột để chốt Phương án A
               </span>
             ) : (
-              <span className="text-slate-500 italic">
+              <span className="text-slate-400 italic">
                 Kéo thẻ sang trái màn hình để chọn
               </span>
             )}
           </div>
         </div>
 
-        {/* CENTER: PHYSICAL REIGNS PORTRAIT CARD */}
-        <div className="w-full max-w-[330px] sm:max-w-[360px] shrink-0">
+        {/* CENTER: WIDER PHYSICAL EVENT CARD (Expanded width, bright white paper aesthetic) */}
+        <div className="w-full max-w-[390px] sm:max-w-[430px] shrink-0">
           <div
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
@@ -147,88 +147,88 @@ export default function Card({ dilemma, onMakeChoice }) {
               transform: `translate3d(${dragOffset.x}px, ${dragOffset.y}px, 0px) rotate(${rotation}deg)`,
               transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
             }}
-            className="w-full cursor-grab active:cursor-grabbing relative select-none rounded-3xl bg-slate-900 border-2 border-slate-700 shadow-2xl p-6 sm:p-7 overflow-hidden flex flex-col justify-between min-h-[480px] sm:min-h-[510px]"
+            className="w-full cursor-grab active:cursor-grabbing relative select-none rounded-3xl bg-white border-2 border-slate-200/90 shadow-2xl p-7 sm:p-8 overflow-hidden flex flex-col justify-between min-h-[480px] sm:min-h-[520px]"
           >
             {/* Crisp Stamps */}
             {dragOffset.x < -30 && (
-              <div className="absolute top-9 right-6 rotate-6 border-3 border-emerald-400 text-emerald-300 bg-slate-950 font-black text-xs sm:text-sm uppercase px-3.5 py-1.5 rounded-xl shadow-lg pointer-events-none">
+              <div className="absolute top-10 right-8 rotate-6 border-3 border-emerald-600 text-emerald-700 bg-white font-black text-xs sm:text-sm uppercase px-4 py-2 rounded-xl shadow-lg pointer-events-none">
                 PHƯƠNG ÁN A
               </div>
             )}
             {dragOffset.x > 30 && (
-              <div className="absolute top-9 left-6 -rotate-6 border-3 border-blue-400 text-blue-300 bg-slate-950 font-black text-xs sm:text-sm uppercase px-3.5 py-1.5 rounded-xl shadow-lg pointer-events-none">
+              <div className="absolute top-10 left-8 -rotate-6 border-3 border-blue-600 text-blue-700 bg-white font-black text-xs sm:text-sm uppercase px-4 py-2 rounded-xl shadow-lg pointer-events-none">
                 PHƯƠNG ÁN B
               </div>
             )}
 
             {/* Card Header: Quarter & Category */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-2">
-              <span className="text-xs sm:text-sm font-black text-red-400 uppercase tracking-wide">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-2">
+              <span className="text-xs sm:text-sm font-black text-red-700 uppercase tracking-wide">
                 {dilemma.quarter}
               </span>
-              <span className="text-xs font-semibold text-slate-300 px-2.5 py-0.5 rounded-lg bg-slate-800 border border-slate-700 truncate max-w-[170px]">
+              <span className="text-xs font-semibold text-slate-700 px-3 py-1 rounded-lg bg-slate-100 border border-slate-200 truncate max-w-[210px]">
                 {dilemma.category}
               </span>
             </div>
 
             {/* Card Character Avatar & Portrait */}
-            <div className="flex flex-col items-center justify-center my-auto py-2">
+            <div className="flex flex-col items-center justify-center my-auto py-3">
               <AvatarVector
                 id={dilemma.character.avatarId}
-                size="w-28 h-28 sm:w-32 sm:h-32"
-                className="border-2 border-slate-700 shadow-xl mb-3"
+                size="w-28 h-28 sm:w-36 sm:h-36"
+                className="border-2 border-slate-200 shadow-md mb-3.5 bg-slate-50"
               />
 
-              <h3 className="font-black text-lg sm:text-xl text-slate-100 text-center tracking-tight">
+              <h3 className="font-black text-lg sm:text-xl text-slate-900 text-center tracking-tight">
                 {dilemma.character.name}
               </h3>
-              <span className="text-xs sm:text-sm text-amber-400 font-semibold mb-3">
+              <span className="text-xs sm:text-sm text-amber-700 font-bold mb-3">
                 {dilemma.character.role}
               </span>
 
               {/* Dialogue / Situation text */}
-              <p className="font-serif text-slate-200 text-sm sm:text-base leading-relaxed text-center px-1">
+              <p className="font-serif text-slate-800 text-base sm:text-lg leading-relaxed text-center px-1">
                 "{dilemma.situation}"
               </p>
             </div>
 
             {/* Card Footer */}
-            <div className="pt-2.5 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
-              <span>Chương 4: Tư tưởng Hồ Chí Minh</span>
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+              <span className="font-medium text-slate-500">Tư tưởng Hồ Chí Minh: Chương 4</span>
               <span>Sự vụ #{dilemma.id}/16</span>
             </div>
           </div>
         </div>
 
-        {/* RIGHT PANEL: PHƯƠNG ÁN B (Expanded size, comfortable width, fewer lines) */}
+        {/* RIGHT PANEL: PHƯƠNG ÁN B (Spacious, Bright Blue on Light theme) */}
         <div 
-          className={`hidden md:flex flex-1 flex-col justify-between p-7 lg:p-8 xl:p-9 rounded-3xl border-2 transition-all duration-200 min-h-[480px] sm:min-h-[510px] text-right shadow-xl ${
+          className={`hidden md:flex flex-1 flex-col justify-between p-7 lg:p-8 xl:p-9 rounded-3xl border-2 transition-all duration-200 min-h-[480px] sm:min-h-[520px] text-right shadow-sm ${
             isRight 
-              ? 'bg-blue-950/95 border-blue-400 text-blue-100 scale-[1.03] shadow-blue-950/80 ring-2 ring-blue-500/40 opacity-100 -translate-x-1'
-              : 'bg-slate-900/70 border-slate-800 text-slate-400 opacity-65 hover:opacity-90'
+              ? 'bg-blue-50 border-blue-600 text-blue-950 scale-[1.02] shadow-xl ring-2 ring-blue-500/30 opacity-100 -translate-x-1'
+              : 'bg-white border-slate-200 text-slate-700 opacity-65 hover:opacity-90 shadow-sm'
           }`}
         >
           <div>
-            <div className="flex items-center justify-end gap-2 mb-4 pb-2.5 border-b border-slate-800">
-              <span className={`text-xs sm:text-sm font-black uppercase tracking-wider ${isRight ? 'text-blue-300' : 'text-slate-400'}`}>
+            <div className="flex items-center justify-end gap-2 mb-4 pb-2.5 border-b border-slate-200">
+              <span className={`text-xs sm:text-sm font-black uppercase tracking-wider ${isRight ? 'text-blue-700' : 'text-slate-500'}`}>
                 PHƯƠNG ÁN B →
               </span>
             </div>
 
             <p className={`text-base sm:text-lg xl:text-xl font-semibold leading-relaxed transition-colors ${
-              isRight ? 'text-blue-50 font-bold' : 'text-slate-200'
+              isRight ? 'text-blue-950 font-bold' : 'text-slate-800'
             }`}>
               "{dilemma.rightChoice.text}"
             </p>
           </div>
 
-          <div className="pt-4 border-t border-slate-800 text-xs sm:text-sm">
+          <div className="pt-4 border-t border-slate-200 text-xs sm:text-sm">
             {isRight ? (
-              <span className="text-blue-300 font-bold uppercase tracking-wide flex items-center justify-end gap-1.5 animate-pulse">
+              <span className="text-blue-700 font-bold uppercase tracking-wide flex items-center justify-end gap-1.5 animate-pulse">
                 ✓ Thả chuột để chốt Phương án B
               </span>
             ) : (
-              <span className="text-slate-500 italic">
+              <span className="text-slate-400 italic">
                 Kéo thẻ sang phải màn hình để chọn
               </span>
             )}

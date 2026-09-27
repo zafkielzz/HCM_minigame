@@ -193,22 +193,22 @@ export default function LeaderboardRoom({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fadeIn overflow-y-auto">
-      <div className="w-full max-w-3xl bg-slate-900 border border-slate-700 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col justify-between my-auto max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+      <div className="w-full max-w-3xl bg-white border-2 border-slate-200 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col justify-between my-auto max-h-[92vh]">
         {/* Top Header */}
-        <div className="flex items-center justify-between pb-3.5 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-3.5 border-b border-slate-200">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center border border-amber-300">
               <Trophy className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-black text-slate-100 flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
                 <span>ĐẤU PHÒNG LỚP HỌC</span>
-                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
                   Thời Gian Thực
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Thi đua trực tiếp giữa các bạn sinh viên trong lớp học môn Tư tưởng Hồ Chí Minh
               </p>
             </div>
@@ -216,7 +216,7 @@ export default function LeaderboardRoom({
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -226,22 +226,22 @@ export default function LeaderboardRoom({
         {mode === 'select' && (
           <div className="py-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Host Card */}
-            <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 transition-all flex flex-col justify-between group">
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-amber-400 hover:bg-amber-50/30 transition-all flex flex-col justify-between group">
               <div>
-                <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-3">
+                <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-3 border border-amber-200">
                   <Crown className="w-6 h-6" />
                 </div>
-                <h3 className="text-base font-bold text-slate-100 mb-1">
+                <h3 className="text-base font-bold text-slate-900 mb-1">
                   1. Màn Hình Máy Chiếu (Chủ Phòng)
                 </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed">
                   Dành cho <strong>Nhóm thuyết trình</strong>: Tạo mã phòng, chiếu lên màn hình lớn, chờ cả lớp vào phòng rồi bấm Bắt đầu thi đấu và theo dõi BXH trực tiếp.
                 </p>
               </div>
 
               <button
                 onClick={handleCreateHost}
-                className="mt-6 w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+                className="mt-6 w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
               >
                 <span>Tạo phòng máy chiếu</span>
                 <ArrowRight className="w-4 h-4" />
@@ -249,15 +249,15 @@ export default function LeaderboardRoom({
             </div>
 
             {/* Join Card */}
-            <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 hover:border-blue-500/50 transition-all flex flex-col justify-between group">
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 transition-all flex flex-col justify-between group">
               <div>
-                <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-3">
+                <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-3 border border-blue-200">
                   <Users className="w-6 h-6" />
                 </div>
-                <h3 className="text-base font-bold text-slate-100 mb-1">
+                <h3 className="text-base font-bold text-slate-900 mb-1">
                   2. Sinh Viên Tham Gia (Điện thoại)
                 </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed">
                   Dành cho <strong>các bạn sinh viên dưới lớp</strong>: Nhập họ tên và mã phòng đang chiếu trên bảng để cùng tham gia tranh tài.
                 </p>
               </div>
@@ -268,7 +268,7 @@ export default function LeaderboardRoom({
                   placeholder="Họ tên (VD: Lan - Nhóm 2)"
                   value={playerName}
                   onChange={(e) => setPlayerName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500"
                   required
                 />
                 <input
@@ -276,12 +276,12 @@ export default function LeaderboardRoom({
                   placeholder="Mã phòng (VD: HCM-88)"
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-100 uppercase tracking-widest font-mono focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 uppercase tracking-widest font-mono focus:outline-none focus:border-blue-500"
                   required
                 />
                 <button
                   type="submit"
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
                 >
                   <span>Vào phòng thi đấu</span>
                   <ArrowRight className="w-4 h-4" />
@@ -295,21 +295,21 @@ export default function LeaderboardRoom({
         {mode === 'host' && (
           <div className="py-4 space-y-4 overflow-y-auto">
             {/* Host Banner & PIN */}
-            <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-2xl bg-slate-950 border border-slate-800 gap-3">
+            <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200 gap-3">
               <div>
-                <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block mb-0.5">
+                <span className="text-[11px] uppercase tracking-wider text-slate-500 font-bold block mb-0.5">
                   Mã Phòng Cho Cả Lớp Nhập:
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl sm:text-3xl font-black font-mono text-amber-400 tracking-wider">
+                  <span className="text-2xl sm:text-3xl font-black font-mono text-red-600 tracking-wider">
                     {roomCode}
                   </span>
                   <button
                     onClick={handleCopyCode}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition-colors"
+                    className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs transition-colors shadow-sm"
                     title="Sao chép mã phòng"
                   >
-                    {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                    {copiedCode ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
@@ -320,7 +320,7 @@ export default function LeaderboardRoom({
                   <button
                     onClick={handleHostStart}
                     disabled={sortedPlayers.length === 0}
-                    className="w-full sm:w-auto py-3 px-6 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto py-3 px-6 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
                   >
                     <Play className="w-4 h-4 fill-white" />
                     <span>Bắt Đầu Phiên Thi Đấu ({sortedPlayers.length})</span>
@@ -328,7 +328,7 @@ export default function LeaderboardRoom({
                 ) : hostPhase === 'live' ? (
                   <button
                     onClick={handleHostEnd}
-                    className="w-full sm:w-auto py-3 px-6 bg-red-600 hover:bg-red-500 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
                   >
                     <StopCircle className="w-4 h-4" />
                     <span>Kết Thúc Phiên & Tổng Kết</span>
@@ -339,7 +339,7 @@ export default function LeaderboardRoom({
                       setHostPhase('lobby');
                       setPlayers({});
                     }}
-                    className="w-full sm:w-auto py-3 px-5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto py-3 px-5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
                   >
                     <RefreshCw className="w-4 h-4" />
                     <span>Mở Lượt Chơi Mới</span>
@@ -350,9 +350,9 @@ export default function LeaderboardRoom({
 
             {/* Host Phase 1: LOBBY */}
             {hostPhase === 'lobby' && (
-              <div className="p-5 rounded-2xl bg-slate-950/70 border border-slate-800 text-center">
-                <div className="flex items-center justify-center gap-2 mb-2 text-sm font-bold text-slate-300">
-                  <UserCheck className="w-4 h-4 text-emerald-400" />
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+                <div className="flex items-center justify-center gap-2 mb-2 text-sm font-bold text-slate-800">
+                  <UserCheck className="w-4 h-4 text-emerald-600" />
                   <span>Danh sách sinh viên đã vào phòng ({sortedPlayers.length}):</span>
                 </div>
 
@@ -365,7 +365,7 @@ export default function LeaderboardRoom({
                     {sortedPlayers.map((p, idx) => (
                       <span
                         key={p.id}
-                        className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                        className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                       >
                         <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
                         <span>{p.name}</span>
@@ -378,18 +378,18 @@ export default function LeaderboardRoom({
 
             {/* Host Phase 2: LIVE LEADERBOARD */}
             {hostPhase === 'live' && (
-              <div className="rounded-2xl border border-slate-800 overflow-hidden bg-slate-950">
-                <div className="p-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-xs font-bold text-slate-300">
+              <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-sm">
+                <div className="p-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-xs font-bold text-slate-800">
                   <span>BẢNG XẾP HẠNG THỜI GIAN THỰC</span>
-                  <span className="text-amber-400 flex items-center gap-1">
-                    <Flame className="w-3.5 h-3.5" />
+                  <span className="text-amber-700 flex items-center gap-1">
+                    <Flame className="w-3.5 h-3.5 text-amber-600" />
                     <span>Đang thi đấu...</span>
                   </span>
                 </div>
 
                 <div className="max-h-72 overflow-y-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-900/50 text-slate-400 border-b border-slate-800">
+                    <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                       <tr>
                         <th className="py-2.5 px-3 w-12 text-center">#</th>
                         <th className="py-2.5 px-3">Thí Sinh</th>
@@ -398,34 +398,34 @@ export default function LeaderboardRoom({
                         <th className="py-2.5 px-3 text-right">Điểm Cân Bằng</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60">
+                    <tbody className="divide-y divide-slate-100">
                       {sortedPlayers.map((p, idx) => (
-                        <tr key={p.id} className="hover:bg-slate-900/40">
+                        <tr key={p.id} className="hover:bg-slate-50">
                           <td className="py-2.5 px-3 text-center font-black">
                             {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
                           </td>
-                          <td className="py-2.5 px-3 font-bold text-slate-100">
+                          <td className="py-2.5 px-3 font-bold text-slate-900">
                             {p.name}
                           </td>
-                          <td className="py-2.5 px-3 text-center font-mono text-amber-300 font-bold">
+                          <td className="py-2.5 px-3 text-center font-mono text-amber-700 font-bold">
                             Quý {p.quarter}/16
                           </td>
                           <td className="py-2.5 px-3 text-center">
                             {p.status === 'finished' ? (
-                              <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 text-[10px] font-bold border border-emerald-800">
+                              <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300">
                                 🏆 Hoàn thành
                               </span>
                             ) : p.status === 'failed' ? (
-                              <span className="px-2 py-0.5 rounded bg-rose-950 text-rose-300 text-[10px] font-bold border border-rose-800">
+                              <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-bold border border-rose-300">
                                 🛑 Bãi miễn tại Quý {p.quarter}
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-300 text-[10px] font-bold border border-blue-800">
+                              <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-[10px] font-bold border border-blue-300">
                                 🟢 Đang tại vị
                               </span>
                             )}
                           </td>
-                          <td className="py-2.5 px-3 text-right font-black text-slate-200">
+                          <td className="py-2.5 px-3 text-right font-black text-slate-900">
                             {p.score} đ
                           </td>
                         </tr>
@@ -440,17 +440,17 @@ export default function LeaderboardRoom({
             {hostPhase === 'summary' && (
               <div className="space-y-4">
                 {/* Podium Top 3 */}
-                <div className="grid grid-cols-3 gap-2 text-center py-4 bg-slate-950 rounded-2xl border border-slate-800">
+                <div className="grid grid-cols-3 gap-2 text-center py-4 bg-slate-50 rounded-2xl border border-slate-200">
                   {/* Rank 2 */}
                   <div className="flex flex-col items-center justify-end p-2">
                     <span className="text-3xl mb-1">🥈</span>
-                    <span className="text-xs font-bold text-slate-200 truncate max-w-[90px]">
+                    <span className="text-xs font-bold text-slate-800 truncate max-w-[90px]">
                       {sortedPlayers[1]?.name || '---'}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-mono">
+                    <span className="text-[11px] text-slate-500 font-mono">
                       {sortedPlayers[1] ? `Quý ${sortedPlayers[1].quarter}/16 • ${sortedPlayers[1].score}đ` : ''}
                     </span>
-                    <div className="w-full h-16 bg-slate-800 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-400 text-sm">
+                    <div className="w-full h-16 bg-slate-200 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-700 text-sm">
                       #2
                     </div>
                   </div>
@@ -458,13 +458,13 @@ export default function LeaderboardRoom({
                   {/* Rank 1 (Crown) */}
                   <div className="flex flex-col items-center justify-end p-2 -translate-y-2">
                     <span className="text-4xl mb-1 animate-bounce">👑</span>
-                    <span className="text-sm font-black text-amber-300 truncate max-w-[110px]">
+                    <span className="text-sm font-black text-amber-800 truncate max-w-[110px]">
                       {sortedPlayers[0]?.name || '---'}
                     </span>
-                    <span className="text-xs text-amber-400/90 font-mono font-bold">
+                    <span className="text-xs text-amber-700 font-mono font-bold">
                       {sortedPlayers[0] ? `Quý ${sortedPlayers[0].quarter}/16 • ${sortedPlayers[0].score}đ` : ''}
                     </span>
-                    <div className="w-full h-24 bg-gradient-to-t from-amber-600 to-yellow-500 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-950 text-base shadow-lg shadow-amber-500/20">
+                    <div className="w-full h-24 bg-gradient-to-t from-amber-500 to-yellow-400 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-950 text-base shadow-lg shadow-amber-500/20">
                       QUÁN QUÂN
                     </div>
                   </div>
@@ -472,38 +472,38 @@ export default function LeaderboardRoom({
                   {/* Rank 3 */}
                   <div className="flex flex-col items-center justify-end p-2">
                     <span className="text-3xl mb-1">🥉</span>
-                    <span className="text-xs font-bold text-slate-200 truncate max-w-[90px]">
+                    <span className="text-xs font-bold text-slate-800 truncate max-w-[90px]">
                       {sortedPlayers[2]?.name || '---'}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-mono">
+                    <span className="text-[11px] text-slate-500 font-mono">
                       {sortedPlayers[2] ? `Quý ${sortedPlayers[2].quarter}/16 • ${sortedPlayers[2].score}đ` : ''}
                     </span>
-                    <div className="w-full h-12 bg-slate-800 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-400 text-sm">
+                    <div className="w-full h-12 bg-slate-200 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-700 text-sm">
                       #3
                     </div>
                   </div>
                 </div>
 
                 {/* FULL RANKING TABLE OF ALL PLAYERS (Under the Podium) */}
-                <div className="rounded-2xl border border-slate-800 overflow-hidden bg-slate-950">
-                  <div className="p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-slate-200">
-                      <ClipboardList className="w-4 h-4 text-amber-400" />
+                <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-sm">
+                  <div className="p-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-slate-800">
+                      <ClipboardList className="w-4 h-4 text-amber-600" />
                       <span>Bảng Điểm Toàn Bộ Thí Sinh ({sortedPlayers.length})</span>
                     </div>
 
                     <button
                       onClick={handleCopyRankingReport}
-                      className="py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-700"
+                      className="py-1.5 px-3 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-300 shadow-sm"
                     >
-                      {copiedRankingReport ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copiedRankingReport ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copiedRankingReport ? 'Đã sao chép!' : 'Sao chép bảng điểm'}</span>
                     </button>
                   </div>
 
                   <div className="max-h-64 sm:max-h-72 overflow-y-auto">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-900/60 text-slate-400 border-b border-slate-800 sticky top-0 backdrop-blur-sm">
+                      <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 sticky top-0 backdrop-blur-sm">
                         <tr>
                           <th className="py-2.5 px-3 w-12 text-center">Hạng</th>
                           <th className="py-2.5 px-3">Họ Tên Thí Sinh</th>
@@ -513,33 +513,33 @@ export default function LeaderboardRoom({
                           <th className="py-2.5 px-3 text-left hidden sm:table-cell">Danh Hiệu</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/60">
+                      <tbody className="divide-y divide-slate-100">
                         {sortedPlayers.map((p, idx) => (
-                          <tr key={p.id} className="hover:bg-slate-900/50">
+                          <tr key={p.id} className="hover:bg-slate-50">
                             <td className="py-2.5 px-3 text-center font-black">
                               {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
                             </td>
-                            <td className="py-2.5 px-3 font-bold text-slate-100">
+                            <td className="py-2.5 px-3 font-bold text-slate-900">
                               {p.name}
                             </td>
-                            <td className="py-2.5 px-3 text-center font-mono font-bold text-amber-300">
+                            <td className="py-2.5 px-3 text-center font-mono font-bold text-amber-700">
                               {p.quarter} / 16 Quý
                             </td>
                             <td className="py-2.5 px-3 text-center">
                               {p.status === 'finished' || p.quarter >= 16 ? (
-                                <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 text-[10px] font-bold border border-emerald-800">
+                                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300">
                                   🏆 Hoàn thành 16 Quý
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded bg-rose-950 text-rose-300 text-[10px] font-bold border border-rose-800">
+                                <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-bold border border-rose-300">
                                   🛑 Bãi miễn tại Quý {p.quarter}
                                 </span>
                               )}
                             </td>
-                            <td className="py-2.5 px-3 text-right font-black text-slate-200">
+                            <td className="py-2.5 px-3 text-right font-black text-slate-900">
                               {p.score} đ
                             </td>
-                            <td className="py-2.5 px-3 text-left text-slate-400 text-[11px] hidden sm:table-cell">
+                            <td className="py-2.5 px-3 text-left text-slate-500 text-[11px] hidden sm:table-cell">
                               {p.rankTitle || 'Cán bộ'}
                             </td>
                           </tr>
@@ -549,7 +549,7 @@ export default function LeaderboardRoom({
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-300 text-center">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 text-center">
                   Chúc mừng các bạn sinh viên đã hoàn thành nhiệm kỳ xuất sắc với tinh thần phụng sự công bộc của Chủ tịch Hồ Chí Minh!
                 </div>
               </div>
@@ -560,23 +560,23 @@ export default function LeaderboardRoom({
         {/* Mode 3: JOIN (Student Phone Screen) */}
         {mode === 'join' && (
           <div className="py-8 text-center space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center mx-auto border border-blue-500/30">
+            <div className="w-16 h-16 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center mx-auto border border-blue-200">
               <Users className="w-8 h-8" />
             </div>
 
             <div>
-              <span className="text-xs text-slate-400 block mb-1">
-                Thí sinh: <strong className="text-slate-100">{playerName}</strong>
+              <span className="text-xs text-slate-500 block mb-1">
+                Thí sinh: <strong className="text-slate-900">{playerName}</strong>
               </span>
-              <h3 className="text-xl font-black text-slate-100">
-                ĐÃ VÀO PHÒNG: <span className="font-mono text-amber-400">{roomCode}</span>
+              <h3 className="text-xl font-black text-slate-900">
+                ĐÃ VÀO PHÒNG: <span className="font-mono text-red-600">{roomCode}</span>
               </h3>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 max-w-sm mx-auto text-xs text-slate-300 leading-relaxed">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 max-w-sm mx-auto text-xs text-slate-700 leading-relaxed">
               {sessionStarted ? (
-                <div className="text-emerald-400 font-bold flex items-center justify-center gap-1.5">
-                  <Check className="w-4 h-4" />
+                <div className="text-emerald-700 font-bold flex items-center justify-center gap-1.5">
+                  <Check className="w-4 h-4 text-emerald-600" />
                   <span>Phiên thi đấu đã bắt đầu! Đang tải màn chơi...</span>
                 </div>
               ) : (
@@ -589,7 +589,7 @@ export default function LeaderboardRoom({
             {sessionStarted && (
               <button
                 onClick={onClose}
-                className="py-3 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+                className="py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md"
               >
                 Vào Bàn Làm Việc (Bắt Đầu Vuốt)
               </button>
@@ -598,11 +598,11 @@ export default function LeaderboardRoom({
         )}
 
         {/* Modal Footer */}
-        <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+        <div className="pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
           <span>Kết nối Real-time qua SSE & Mạng phòng học</span>
           <button
             onClick={() => setMode('select')}
-            className="text-slate-400 hover:text-slate-200 transition-colors"
+            className="text-slate-500 hover:text-slate-800 transition-colors"
           >
             Quay lại chọn vai trò
           </button>
