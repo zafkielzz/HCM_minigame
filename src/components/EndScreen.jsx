@@ -13,7 +13,8 @@ export default function EndScreen({
   roomCode = '',
   playerName = '',
   isSessionEndedByHost = false,
-  onLeaveMultiplayer
+  onLeaveMultiplayer,
+  onOpenLeaderboard
 }) {
   const [copied, setCopied] = useState(false);
   const isVictory = ending.badge.includes("Mẫu Mực") || quartersSurvived >= 16;
@@ -148,9 +149,16 @@ export default function EndScreen({
             </div>
           ) : (
             <div className="space-y-2 pt-1">
-              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
-                🏁 Phiên thi đấu đã kết thúc! Hãy nhìn lên máy chiếu xem Bục vinh quang!
+              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold text-center">
+                🏁 Phiên thi đấu đã kết thúc! Bảng xếp hạng toàn lớp đã được đồng bộ.
               </div>
+              <button
+                onClick={onOpenLeaderboard}
+                className="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5"
+              >
+                <Trophy className="w-4 h-4" />
+                <span>Xem Bảng Xếp Hạng Lớp Học (Đồng Bộ)</span>
+              </button>
               <button
                 onClick={onLeaveMultiplayer}
                 className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition-all flex items-center justify-center gap-1.5 shadow-sm"

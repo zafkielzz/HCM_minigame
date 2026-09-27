@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import confetti from 'canvas-confetti';
 import Header from './components/Header';
 import IndicatorBar from './components/IndicatorBar';
 import Card from './components/Card';
@@ -11,6 +12,7 @@ import ConfirmModal from './components/ConfirmModal';
 
 import { DILEMMAS, getShuffledDilemmas } from './data/dilemmas';
 import { ENDINGS, getTitleByPerformance } from './data/endings';
+import { playSound } from './utils/sound';
 
 const INITIAL_STATS = {
   people: 60,
@@ -38,6 +40,7 @@ export default function App() {
   // Multiplayer session context (if joined a room)
   const [multiplayerContext, setMultiplayerContext] = useState(null); // { session, playerId, playerName, roomCode }
   const [isSessionEndedByHost, setIsSessionEndedByHost] = useState(false);
+  const [syncedPlayersList, setSyncedLeaderboardPlayers] = useState([]);
 
   // Restart / Reset with fresh or seeded dilemmas
   const handleRestart = (seed = null) => {
@@ -54,6 +57,7 @@ export default function App() {
   const handleStart = () => {
     setMultiplayerContext(null);
     setIsSessionEndedByHost(false);
+    setSyncedLeaderboardPlayers([]);
     handleRestart(null);
   };
 
@@ -61,12 +65,26 @@ export default function App() {
   const handleStartSoloWithSession = (sessionData) => {
     setMultiplayerContext(sessionData);
     setIsSessionEndedByHost(false);
+    setSyncedLeaderboardPlayers([]);
     setIsLeaderboardOpen(false);
 
-    // Listen for Host end session signal
+    // Listen for Host end session signal (Immediately end user screen & sync leaderboard)
     sessionData.session.onMessage((data) => {
       if (data.type === 'SESSION_END') {
         setIsSessionEndedByHost(true);
+        if (data.playersList) {
+          setSyncedLeaderboardPlayers(data.playersList);
+        }
+        setActiveEnding((prev) => prev || ENDINGS.SESSION_ENDED_BY_HOST);
+        setGameStatus('ended');
+        setCurrentResult(null);
+        setIsLeaderboardOpen(true);
+        playSound('victory');
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.5 }
+        });
       }
     });
 
@@ -217,6 +235,7 @@ export default function App() {
               playerName={multiplayerContext?.playerName}
               isSessionEndedByHost={isSessionEndedByHost}
               onLeaveMultiplayer={handleLeaveMultiplayer}
+              onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
             />
           </div>
         ) : (
@@ -284,6 +303,10 @@ export default function App() {
         currentQuarter={currentQuarter}
         stats={stats}
         onStartSoloWithSession={handleStartSoloWithSession}
+        multiplayerContext={multiplayerContext}
+        isSessionEndedByHost={isSessionEndedByHost}
+        syncedPlayersList={syncedPlayersList}
+        onLeaveMultiplayer={handleLeaveMultiplayer}
       />
 
       {/* Navigation Confirm Modal */}

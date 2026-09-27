@@ -63,6 +63,15 @@ export const ENDINGS = {
     reason: "Xuất sắc! Bạn đã chèo lái chính quyền vượt qua trọn vẹn 16 quý (4 năm nhiệm kỳ). Cân bằng hoàn hảo giữa LÒNG DÂN, PHÁP QUYỀN, LIÊM CHÍNH và CẢI CÁCH HÀNH CHÍNH!",
     hcmLesson: "Bạn đã hiện thực hóa trọn vẹn tư tưởng Hồ Chí Minh: Một Nhà nước thực sự CỦA DÂN, DO DÂN, VÌ DÂN; lấy pháp luật làm chuẩn mực kỷ cương; lấy liêm chính làm lẽ sống; lấy sự hài lòng và ấm no của nhân dân làm mục tiêu phục vụ tối thượng!",
     quote: "'Người lãnh đạo phải: Cần, kiệm, liêm, chính, chí công vô tư. Việc gì có lợi cho dân ta phải hết sức làm, việc gì có hại cho dân ta phải hết sức tránh!'"
+  },
+  SESSION_ENDED_BY_HOST: {
+    title: "Chủ Phòng Kết Thúc Phiên Thi Đấu",
+    badge: "Tổng Kết Lớp Học",
+    avatar: "🏁",
+    color: "amber",
+    reason: "Chủ phòng (nhóm thuyết trình) đã chốt sổ và kết thúc phiên thi đấu để công bố bảng xếp hạng thành tích chung cuộc toàn lớp.",
+    hcmLesson: "Chủ tịch Hồ Chí Minh dạy: 'Thi đua là yêu nước, yêu nước thì phải thi đua'. Việc học tập và vận dụng tư tưởng Hồ Chí Minh là quá trình trau dồi liên tục, không ngừng rèn luyện đạo đức công bộc của người cán bộ.",
+    quote: "'Đoàn kết, đoàn kết, đại đoàn kết. Thành công, thành công, đại thành công.'"
   }
 };
 

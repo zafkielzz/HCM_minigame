@@ -54,7 +54,8 @@ export function registerHostRoom(roomCode = DEFAULT_HOST_ROOM_CODE, status = 'lo
     rooms[code] = {
       code,
       createdAt: Date.now(),
-      status // 'lobby' | 'live' | 'summary'
+      updatedAt: Date.now(),
+      status // 'lobby' | 'live' | 'summary' | 'closed'
     };
     localStorage.setItem(STORAGE_KEY_ROOMS, JSON.stringify(rooms));
   } catch (e) {
@@ -63,7 +64,7 @@ export function registerHostRoom(roomCode = DEFAULT_HOST_ROOM_CODE, status = 'lo
 }
 
 /**
- * Updates status of an existing host room ('lobby' | 'live' | 'summary').
+ * Updates status of an existing host room ('lobby' | 'live' | 'summary' | 'closed').
  */
 export function updateHostRoomStatus(roomCode = DEFAULT_HOST_ROOM_CODE, status) {
   try {
@@ -80,54 +81,169 @@ export function updateHostRoomStatus(roomCode = DEFAULT_HOST_ROOM_CODE, status) 
 }
 
 /**
- * Unregisters a host room.
+ * Unregisters a host room and sets its status to 'closed'.
  */
 export function unregisterHostRoom(roomCode = DEFAULT_HOST_ROOM_CODE) {
   try {
     const code = normalizeRoomCode(roomCode);
     const rooms = getActiveRooms();
-    delete rooms[code];
-    localStorage.setItem(STORAGE_KEY_ROOMS, JSON.stringify(rooms));
+    if (rooms[code]) {
+      rooms[code].status = 'closed';
+      rooms[code].updatedAt = Date.now();
+      delete rooms[code];
+      localStorage.setItem(STORAGE_KEY_ROOMS, JSON.stringify(rooms));
+    }
   } catch (e) {
     // ignore
   }
 }
 
 /**
- * Verifies if a room code is valid.
- * - Accepts HCM prefix + numbers (e.g. HCM1945, HCM24, or student typing 1945)
- * - Returns { valid: true, code } or { valid: false, message }
+ * Verifies if a room is actively OPEN and accepting players.
+ * Strict room lifecycle control:
+ * 1. Checks format (HCM prefix + digits e.g. HCM1945, HCM24)
+ * 2. Checks if Host has actively clicked "Tạo phòng" (status: 'lobby')
+ * 3. Blocks entry if Host hasn't opened room yet
+ * 4. Blocks entry if session already started (status: 'live') or ended (status: 'summary')
  */
-export function verifyRoom(roomCode) {
+export async function verifyRoom(roomCode) {
   const code = normalizeRoomCode(roomCode);
   if (!code) {
     return { valid: false, message: 'Vui lòng nhập Mã phòng.' };
   }
 
-  // Must match format HCM + digits (e.g. HCM1945, HCM24) or known valid codes
+  // 1. Format check
   const isFormatValid = /^HCM\d+$/.test(code) || VALID_ROOM_CODES.has(code);
-  const localRooms = getActiveRooms();
-  const isRegisteredValid = Boolean(localRooms[code]);
-
-  if (!isFormatValid && !isRegisteredValid) {
+  if (!isFormatValid) {
     return { 
       valid: false, 
       message: `Mã phòng không đúng định dạng (Ví dụ: ${DEFAULT_HOST_ROOM_CODE} hoặc HCM24)!` 
     };
   }
 
-  // Check if active host is already in 'live' or 'summary'
-  const room = localRooms[code];
-  if (room) {
-    if (room.status === 'live') {
-      return { valid: false, message: 'Phòng thi đấu này đã bắt đầu! Không thể tham gia giữa chừng.' };
-    }
-    if (room.status === 'summary') {
-      return { valid: false, message: 'Phòng thi đấu này đã kết thúc!' };
+  const now = Date.now();
+
+  // 2. Check local storage (instant 0ms response on same device/browser)
+  const localRooms = getActiveRooms();
+  const localRoom = localRooms[code];
+
+  if (localRoom) {
+    const age = now - (localRoom.updatedAt || localRoom.createdAt || 0);
+    // If local room active in last 2 hours
+    if (age < 2 * 60 * 60 * 1000) {
+      if (localRoom.status === 'live' || localRoom.status === 'locked') {
+        return { 
+          valid: false, 
+          message: 'Phòng thi đấu đã bắt đầu và đã khoá phòng, không thể tham gia!' 
+        };
+      }
+      if (localRoom.status === 'summary') {
+        return { 
+          valid: false, 
+          message: 'Phòng thi đấu này đã kết thúc!' 
+        };
+      }
+      if (localRoom.status === 'closed') {
+        return { 
+          valid: false, 
+          message: 'Chủ phòng chưa mở hoặc đã đóng phòng thi đấu này!' 
+        };
+      }
+      if (localRoom.status === 'lobby') {
+        return { valid: true, code, status: 'lobby' };
+      }
     }
   }
 
-  return { valid: true, code };
+  // 3. For cross-device (e.g. 60 student phones over WiFi/4G connecting to Host laptop):
+  // Poll ntfy.sh to verify if Host has actively opened this room and what its state is
+  try {
+    const topic = `${BASE_TOPIC_PREFIX}${code.toLowerCase()}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+    const resp = await fetch(`https://ntfy.sh/${topic}/json?poll=1`, {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (resp.ok) {
+      const text = await resp.text();
+      const lines = text.trim().split('\n').filter(Boolean);
+
+      // Search backwards for the latest host control packet
+      let latestHostMsg = null;
+      for (let i = lines.length - 1; i >= 0; i--) {
+        try {
+          const item = JSON.parse(lines[i]);
+          if (item.message) {
+            const data = JSON.parse(item.message);
+            if (
+              data.type === 'ROOM_STATE' ||
+              data.type === 'ROOM_HEARTBEAT' ||
+              data.type === 'SESSION_START' ||
+              data.type === 'SESSION_END'
+            ) {
+              latestHostMsg = { ...data, serverTime: (item.time || 0) * 1000 };
+              break;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (!latestHostMsg) {
+        return { 
+          valid: false, 
+          message: 'Chủ phòng chưa mở phòng thi đấu này. Vui lòng chờ nhóm thuyết trình tạo phòng!' 
+        };
+      }
+
+      const msgTime = latestHostMsg.hostTime || latestHostMsg.serverTime || 0;
+      if (now - msgTime > 30 * 60 * 1000) {
+        return { 
+          valid: false, 
+          message: 'Phòng thi đấu này chưa được mở hoặc đã hết hạn từ phiên trước!' 
+        };
+      }
+
+      const status = latestHostMsg.status;
+      if (status === 'live' || status === 'locked' || latestHostMsg.type === 'SESSION_START') {
+        return { 
+          valid: false, 
+          message: 'Phòng thi đấu đã bắt đầu và đã khoá phòng, không thể tham gia!' 
+        };
+      }
+      if (status === 'summary' || latestHostMsg.type === 'SESSION_END') {
+        return { 
+          valid: false, 
+          message: 'Phòng thi đấu này đã kết thúc!' 
+        };
+      }
+      if (status === 'closed') {
+        return { 
+          valid: false, 
+          message: 'Chủ phòng đã đóng phòng thi đấu này!' 
+        };
+      }
+      if (status === 'lobby') {
+        return { valid: true, code, status: 'lobby' };
+      }
+    }
+  } catch (err) {
+    // If fetch failed due to offline/timeout, but local tab was in lobby:
+    if (localRoom && localRoom.status === 'lobby') {
+      return { valid: true, code, status: 'lobby' };
+    }
+    return {
+      valid: false,
+      message: 'Không thể kết nối đến máy chủ phòng. Vui lòng kiểm tra lại kết nối mạng hoặc chờ chủ phòng!'
+    };
+  }
+
+  return { 
+    valid: false, 
+    message: 'Chủ phòng chưa mở phòng thi đấu này. Vui lòng chờ nhóm thuyết trình tạo phòng!' 
+  };
 }
 
 export class MultiplayerSession {
@@ -140,6 +256,7 @@ export class MultiplayerSession {
     this.broadcastChannel = null;
     this.storageListener = null;
     this.visibilityHandler = null;
+    this.heartbeatTimer = null;
     this.listeners = [];
 
     this.init();
@@ -191,6 +308,24 @@ export class MultiplayerSession {
       };
       document.addEventListener('visibilitychange', this.visibilityHandler);
     }
+
+    // 5. If Host, broadcast initial ROOM_STATE and start regular heartbeat
+    if (this.isHost) {
+      registerHostRoom(this.roomCode, 'lobby');
+      this.broadcastRoomState('lobby');
+
+      this.heartbeatTimer = setInterval(() => {
+        if (this.status) {
+          updateHostRoomStatus(this.roomCode, this.status);
+          this.broadcast({
+            type: 'ROOM_HEARTBEAT',
+            roomCode: this.roomCode,
+            status: this.status,
+            hostTime: Date.now()
+          });
+        }
+      }, 4000);
+    }
   }
 
   connectSSE() {
@@ -201,11 +336,22 @@ export class MultiplayerSession {
       const sseUrl = `https://ntfy.sh/${this.topic}/sse`;
       this.eventSource = new EventSource(sseUrl);
 
-      this.eventSource.onmessage = (event) => {
+      this.eventSource.onmessage = async (event) => {
         try {
           const envelope = JSON.parse(event.data);
-          if (envelope.message) {
-            const payload = JSON.parse(envelope.message);
+          let payload = null;
+          if (envelope.attachment && envelope.attachment.url) {
+            try {
+              const fileRes = await fetch(envelope.attachment.url);
+              payload = await fileRes.json();
+            } catch (err) {}
+          }
+          if (!payload && envelope.message) {
+            try {
+              payload = JSON.parse(envelope.message);
+            } catch (err) {}
+          }
+          if (payload) {
             this.handleIncoming(payload);
           }
         } catch (err) {}
@@ -217,14 +363,40 @@ export class MultiplayerSession {
     } catch (e) {}
   }
 
+  broadcastRoomState(status = this.status) {
+    this.status = status;
+    updateHostRoomStatus(this.roomCode, status);
+    this.broadcast({
+      type: 'ROOM_STATE',
+      roomCode: this.roomCode,
+      status: status,
+      hostTime: Date.now()
+    });
+  }
+
   // Optimize traffic for 60 students:
   // Student phones ONLY care about Host control signals (SESSION_START, SESSION_END)
   // Ignoring the other 59 students' progress updates eliminates 98% of mobile CPU & network load!
   handleIncoming(data) {
     if (!data) return;
 
-    if (!this.isHost) {
-      if (data.type !== 'SESSION_START' && data.type !== 'SESSION_END') {
+    if (this.isHost) {
+      if (data.type === 'ROOM_PING') {
+        this.broadcast({
+          type: 'ROOM_PONG',
+          roomCode: this.roomCode,
+          status: this.status,
+          hostTime: Date.now()
+        });
+        return;
+      }
+    } else {
+      if (
+        data.type !== 'SESSION_START' && 
+        data.type !== 'SESSION_END' && 
+        data.type !== 'ROOM_PONG' && 
+        data.type !== 'ROOM_STATE'
+      ) {
         return; // Ignore other students' progress on student phone
       }
     }
@@ -235,7 +407,7 @@ export class MultiplayerSession {
   setStatus(status) {
     this.status = status;
     if (this.isHost) {
-      updateHostRoomStatus(this.roomCode, status);
+      this.broadcastRoomState(status);
     }
   }
 
@@ -286,7 +458,19 @@ export class MultiplayerSession {
   }
 
   close() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
     if (this.isHost) {
+      try {
+        this.broadcast({
+          type: 'ROOM_STATE',
+          roomCode: this.roomCode,
+          status: 'closed',
+          hostTime: Date.now()
+        });
+      } catch (e) {}
       unregisterHostRoom(this.roomCode);
     }
     if (this.visibilityHandler && typeof document !== 'undefined') {
