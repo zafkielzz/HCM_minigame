@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Trophy, Users, Play, StopCircle, RefreshCw, X, Check, Copy, 
-  Crown, Medal, Award, AlertCircle, ArrowRight, UserCheck, Flame 
+  Crown, Medal, Award, AlertCircle, ArrowRight, UserCheck, Flame, Share2, ClipboardList 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MultiplayerSession, generateRoomCode } from '../utils/multiplayer';
@@ -28,6 +28,7 @@ export default function LeaderboardRoom({
   const [sessionStarted, setSessionStarted] = useState(false);
 
   const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedRankingReport, setCopiedRankingReport] = useState(false);
   const sessionRef = useRef(null);
 
   // Clean up session on close
@@ -143,7 +144,6 @@ export default function LeaderboardRoom({
       if (data.type === 'SESSION_START') {
         setSessionStarted(true);
         playSound('select');
-        // Trigger game start on the student's screen
         if (onStartSoloWithSession) {
           onStartSoloWithSession({
             session,
@@ -152,8 +152,6 @@ export default function LeaderboardRoom({
             roomCode: formattedCode
           });
         }
-      } else if (data.type === 'SESSION_END') {
-        // Session closed by host
       }
     });
   };
@@ -171,6 +169,25 @@ export default function LeaderboardRoom({
     navigator.clipboard.writeText(roomCode);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  // Copy full summary report for professor / submission
+  const handleCopyRankingReport = () => {
+    let report = `🇻🇳 [BẢNG TỔNG KẾT ĐẤU PHÒNG - MÔN TƯ TƯỞNG HỒ CHÍ MINH]\n`;
+    report += `Phòng thi đấu: ${roomCode} | Tổng số thí sinh: ${sortedPlayers.length}\n`;
+    report += `------------------------------------------------------\n`;
+
+    sortedPlayers.forEach((p, idx) => {
+      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
+      const statusText = p.status === 'finished' || p.quarter >= 16 
+        ? 'Hoàn thành 16 Quý' 
+        : `Bãi miễn tại Quý ${p.quarter}/16`;
+      report += `${medal} ${p.name} | ${statusText} | Điểm: ${p.score}đ | Danh hiệu: ${p.rankTitle || 'Cán bộ'}\n`;
+    });
+
+    navigator.clipboard.writeText(report);
+    setCopiedRankingReport(true);
+    setTimeout(() => setCopiedRankingReport(false), 2500);
   };
 
   if (!isOpen) return null;
@@ -376,7 +393,7 @@ export default function LeaderboardRoom({
                       <tr>
                         <th className="py-2.5 px-3 w-12 text-center">#</th>
                         <th className="py-2.5 px-3">Thí Sinh</th>
-                        <th className="py-2.5 px-3 text-center">Tiến Độ</th>
+                        <th className="py-2.5 px-3 text-center">Số Kỳ Đã Qua</th>
                         <th className="py-2.5 px-3 text-center">Tình Trạng</th>
                         <th className="py-2.5 px-3 text-right">Điểm Cân Bằng</th>
                       </tr>
@@ -390,7 +407,7 @@ export default function LeaderboardRoom({
                           <td className="py-2.5 px-3 font-bold text-slate-100">
                             {p.name}
                           </td>
-                          <td className="py-2.5 px-3 text-center font-mono text-amber-300">
+                          <td className="py-2.5 px-3 text-center font-mono text-amber-300 font-bold">
                             Quý {p.quarter}/16
                           </td>
                           <td className="py-2.5 px-3 text-center">
@@ -400,7 +417,7 @@ export default function LeaderboardRoom({
                               </span>
                             ) : p.status === 'failed' ? (
                               <span className="px-2 py-0.5 rounded bg-rose-950 text-rose-300 text-[10px] font-bold border border-rose-800">
-                                🛑 Bãi miễn
+                                🛑 Bãi miễn tại Quý {p.quarter}
                               </span>
                             ) : (
                               <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-300 text-[10px] font-bold border border-blue-800">
@@ -419,7 +436,7 @@ export default function LeaderboardRoom({
               </div>
             )}
 
-            {/* Host Phase 3: SUMMARY & PODIUM */}
+            {/* Host Phase 3: SUMMARY & PODIUM + FULL LEADERBOARD LIST */}
             {hostPhase === 'summary' && (
               <div className="space-y-4">
                 {/* Podium Top 3 */}
@@ -431,7 +448,7 @@ export default function LeaderboardRoom({
                       {sortedPlayers[1]?.name || '---'}
                     </span>
                     <span className="text-[11px] text-slate-400 font-mono">
-                      {sortedPlayers[1] ? `Quý ${sortedPlayers[1].quarter} • ${sortedPlayers[1].score}đ` : ''}
+                      {sortedPlayers[1] ? `Quý ${sortedPlayers[1].quarter}/16 • ${sortedPlayers[1].score}đ` : ''}
                     </span>
                     <div className="w-full h-16 bg-slate-800 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-400 text-sm">
                       #2
@@ -445,7 +462,7 @@ export default function LeaderboardRoom({
                       {sortedPlayers[0]?.name || '---'}
                     </span>
                     <span className="text-xs text-amber-400/90 font-mono font-bold">
-                      {sortedPlayers[0] ? `Quý ${sortedPlayers[0].quarter} • ${sortedPlayers[0].score}đ` : ''}
+                      {sortedPlayers[0] ? `Quý ${sortedPlayers[0].quarter}/16 • ${sortedPlayers[0].score}đ` : ''}
                     </span>
                     <div className="w-full h-24 bg-gradient-to-t from-amber-600 to-yellow-500 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-950 text-base shadow-lg shadow-amber-500/20">
                       QUÁN QUÂN
@@ -459,11 +476,76 @@ export default function LeaderboardRoom({
                       {sortedPlayers[2]?.name || '---'}
                     </span>
                     <span className="text-[11px] text-slate-400 font-mono">
-                      {sortedPlayers[2] ? `Quý ${sortedPlayers[2].quarter} • ${sortedPlayers[2].score}đ` : ''}
+                      {sortedPlayers[2] ? `Quý ${sortedPlayers[2].quarter}/16 • ${sortedPlayers[2].score}đ` : ''}
                     </span>
                     <div className="w-full h-12 bg-slate-800 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-400 text-sm">
                       #3
                     </div>
+                  </div>
+                </div>
+
+                {/* FULL RANKING TABLE OF ALL PLAYERS (Under the Podium) */}
+                <div className="rounded-2xl border border-slate-800 overflow-hidden bg-slate-950">
+                  <div className="p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-slate-200">
+                      <ClipboardList className="w-4 h-4 text-amber-400" />
+                      <span>Bảng Điểm Toàn Bộ Thí Sinh ({sortedPlayers.length})</span>
+                    </div>
+
+                    <button
+                      onClick={handleCopyRankingReport}
+                      className="py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-700"
+                    >
+                      {copiedRankingReport ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedRankingReport ? 'Đã sao chép!' : 'Sao chép bảng điểm'}</span>
+                    </button>
+                  </div>
+
+                  <div className="max-h-64 sm:max-h-72 overflow-y-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-900/60 text-slate-400 border-b border-slate-800 sticky top-0 backdrop-blur-sm">
+                        <tr>
+                          <th className="py-2.5 px-3 w-12 text-center">Hạng</th>
+                          <th className="py-2.5 px-3">Họ Tên Thí Sinh</th>
+                          <th className="py-2.5 px-3 text-center">Số Kỳ Đã Trải Qua</th>
+                          <th className="py-2.5 px-3 text-center">Kết Quả Nhiệm Kỳ</th>
+                          <th className="py-2.5 px-3 text-right">Điểm Số</th>
+                          <th className="py-2.5 px-3 text-left hidden sm:table-cell">Danh Hiệu</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {sortedPlayers.map((p, idx) => (
+                          <tr key={p.id} className="hover:bg-slate-900/50">
+                            <td className="py-2.5 px-3 text-center font-black">
+                              {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
+                            </td>
+                            <td className="py-2.5 px-3 font-bold text-slate-100">
+                              {p.name}
+                            </td>
+                            <td className="py-2.5 px-3 text-center font-mono font-bold text-amber-300">
+                              {p.quarter} / 16 Quý
+                            </td>
+                            <td className="py-2.5 px-3 text-center">
+                              {p.status === 'finished' || p.quarter >= 16 ? (
+                                <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 text-[10px] font-bold border border-emerald-800">
+                                  🏆 Hoàn thành 16 Quý
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded bg-rose-950 text-rose-300 text-[10px] font-bold border border-rose-800">
+                                  🛑 Bãi miễn tại Quý {p.quarter}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-black text-slate-200">
+                              {p.score} đ
+                            </td>
+                            <td className="py-2.5 px-3 text-left text-slate-400 text-[11px] hidden sm:table-cell">
+                              {p.rankTitle || 'Cán bộ'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
