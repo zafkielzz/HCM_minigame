@@ -165,11 +165,11 @@ export default function App() {
   const currentDilemma = DILEMMAS[currentQuarter - 1] || DILEMMAS[0];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-3 sm:p-6 relative overflow-x-hidden">
-      {/* Main Container */}
-      <div className="w-full max-w-2xl mx-auto flex-1 flex flex-col justify-between relative z-10">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-3 sm:p-5 relative overflow-x-hidden">
+      {/* Main Container: Expanded to max-w-5xl for 3-column cockpit layout */}
+      <div className="w-full max-w-5xl mx-auto flex-1 flex flex-col justify-between relative z-10">
         {gameStatus === 'intro' ? (
-          <div className="my-auto">
+          <div className="my-auto max-w-lg mx-auto w-full">
             <IntroScreen 
               onStart={handleStart}
               onOpenHandbook={() => setIsHandbookOpen(true)}
@@ -177,7 +177,7 @@ export default function App() {
             />
           </div>
         ) : gameStatus === 'ended' && activeEnding ? (
-          <div className="my-auto">
+          <div className="my-auto max-w-lg mx-auto w-full">
             <EndScreen
               ending={activeEnding}
               stats={stats}
@@ -192,8 +192,8 @@ export default function App() {
           </div>
         ) : (
           <div className="flex-1 flex flex-col justify-between py-2">
-            {/* Top Area: Header & Indicator Bars */}
-            <div className="space-y-3">
+            {/* Top Area: Header & Indicator Bars (Centered) */}
+            <div className="space-y-2.5 max-w-2xl mx-auto w-full">
               <Header
                 currentQuarter={currentQuarter}
                 totalQuarters={DILEMMAS.length}
@@ -209,8 +209,8 @@ export default function App() {
               />
             </div>
 
-            {/* Middle Area: Situation Card */}
-            <main className="my-auto py-3">
+            {/* Middle Area: 3-Column Split Card Playground */}
+            <main className="my-auto py-2 w-full">
               <Card
                 dilemma={currentDilemma}
                 onMakeChoice={handleMakeChoice}
@@ -218,13 +218,13 @@ export default function App() {
             </main>
 
             {/* Bottom Tip for classroom */}
-            <footer className="text-center text-xs text-slate-500 py-1.5 flex items-center justify-center gap-2">
+            <footer className="text-center text-xs text-slate-500 py-1 flex items-center justify-center gap-2">
               {multiplayerContext ? (
                 <span className="text-amber-400 font-bold">
                   ● Đang thi đấu trong phòng [{multiplayerContext.roomCode}] • Thí sinh: {multiplayerContext.playerName}
                 </span>
               ) : (
-                <span>Kéo thẻ chuột sang trái (Phương án A) hoặc sang phải (Phương án B)</span>
+                <span>Kéo thẻ chuột sang bên trái (Phương án A) hoặc bên phải (Phương án B)</span>
               )}
             </footer>
           </div>
