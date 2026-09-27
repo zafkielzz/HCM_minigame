@@ -66,6 +66,25 @@ export default function LeaderboardRoom({
     };
   }, []);
 
+  // Announce and refresh presence for student while in lobby waiting
+  useEffect(() => {
+    let joinHeartbeat = null;
+    if (mode === 'join' && !sessionStarted && sessionRef.current) {
+      joinHeartbeat = setInterval(() => {
+        if (sessionRef.current && mode === 'join' && !sessionStarted) {
+          sessionRef.current.broadcast({
+            type: 'PLAYER_JOIN',
+            playerId,
+            name: playerName.trim()
+          });
+        }
+      }, 2500);
+    }
+    return () => {
+      if (joinHeartbeat) clearInterval(joinHeartbeat);
+    };
+  }, [mode, sessionStarted, playerId, playerName]);
+
   // Admin Host form submit
   const handleCreateHostSubmit = (e) => {
     e.preventDefault();

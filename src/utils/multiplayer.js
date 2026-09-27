@@ -160,13 +160,13 @@ export async function verifyRoom(roomCode) {
           });
         }
       }
-    }, 2000);
+    }, 4500);
 
     try {
       client = mqtt.connect(BROKER_SERVERS[0], {
         clientId: 'vfy_' + Math.random().toString(36).substring(2, 9),
         clean: true,
-        connectTimeout: 1800
+        connectTimeout: 4000
       });
 
       client.on('connect', () => {
@@ -265,6 +265,7 @@ export class MultiplayerSession {
     this.sessionId = sessionId || (isHost ? ('s_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)) : null);
     this.status = isHost ? 'lobby' : null;
     this.listeners = [];
+    this.outboxQueue = [];
     this.mqttClient = null;
     this.broadcastChannel = null;
     this.storageListener = null;
@@ -332,7 +333,7 @@ export class MultiplayerSession {
         clientId: (this.isHost ? 'host_' : 'std_') + Math.random().toString(36).substring(2, 9),
         clean: true,
         reconnectPeriod: 2500,
-        connectTimeout: 4000
+        connectTimeout: 5000
       });
 
       this.mqttClient.on('connect', () => {
@@ -345,6 +346,12 @@ export class MultiplayerSession {
           // Student listens for Host control signals & room state changes
           this.mqttClient.subscribe(`hcm/v2/room/${this.roomCode}/host`, { qos: 0 });
           this.mqttClient.subscribe(`hcm/v2/room/${this.roomCode}/state`, { qos: 0 });
+        }
+
+        // Flush outbox queue as soon as connected!
+        while (this.outboxQueue.length > 0) {
+          const queuedPacket = this.outboxQueue.shift();
+          this.publishMqttPacket(queuedPacket);
         }
       });
 
@@ -459,6 +466,27 @@ export class MultiplayerSession {
     });
   }
 
+  publishMqttPacket(packet) {
+    if (!this.mqttClient || !this.mqttClient.connected) return;
+    try {
+      const jsonStr = JSON.stringify(packet);
+      if (this.isHost) {
+        this.mqttClient.publish(`hcm/v2/room/${this.roomCode}/host`, jsonStr, { qos: 0 });
+        if (packet.type === 'SESSION_START') {
+          this.publishRetainedState('live');
+        } else if (packet.type === 'SESSION_END') {
+          this.publishRetainedState('summary');
+        }
+      } else {
+        this.mqttClient.publish(
+          `hcm/v2/room/${this.roomCode}/students/${packet.playerId || 'anon'}`,
+          jsonStr,
+          { qos: 0 }
+        );
+      }
+    } catch (e) {}
+  }
+
   async broadcast(data) {
     if (this.closed) return;
     const packet = {
@@ -485,25 +513,12 @@ export class MultiplayerSession {
       }
     } catch (e) {}
 
-    // C. MQTT publish
+    // C. MQTT publish (Network / Cross-device)
     if (this.mqttClient && this.mqttClient.connected) {
-      try {
-        const jsonStr = JSON.stringify(packet);
-        if (this.isHost) {
-          this.mqttClient.publish(`hcm/v2/room/${this.roomCode}/host`, jsonStr, { qos: 0 });
-          if (data.type === 'SESSION_START') {
-            this.publishRetainedState('live');
-          } else if (data.type === 'SESSION_END') {
-            this.publishRetainedState('summary');
-          }
-        } else {
-          this.mqttClient.publish(
-            `hcm/v2/room/${this.roomCode}/students/${data.playerId || 'anon'}`,
-            jsonStr,
-            { qos: 0 }
-          );
-        }
-      } catch (e) {}
+      this.publishMqttPacket(packet);
+    } else {
+      // QUEUE MESSAGE so it will be published the moment connection opens!
+      this.outboxQueue.push(packet);
     }
   }
 
