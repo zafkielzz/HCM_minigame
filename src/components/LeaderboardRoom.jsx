@@ -28,8 +28,27 @@ export default function LeaderboardRoom({
   const ADMIN_PASSWORD = 'namngo001';
   const [mode, setMode] = useState('select'); // 'select' | 'host' | 'join' | 'summary'
   const [roomCode, setRoomCode] = useState(() => multiplayerContext?.roomCode || '');
-  const [playerName, setPlayerName] = useState(() => multiplayerContext?.playerName || '');
-  const [playerId] = useState(() => multiplayerContext?.playerId || ('p_' + Math.random().toString(36).substring(2, 9)));
+  const [playerName, setPlayerName] = useState(() => {
+    if (multiplayerContext?.playerName) return multiplayerContext.playerName;
+    try {
+      return localStorage.getItem('hcm_player_name') || '';
+    } catch (e) {
+      return '';
+    }
+  });
+  const [playerId] = useState(() => {
+    if (multiplayerContext?.playerId) return multiplayerContext.playerId;
+    try {
+      let id = localStorage.getItem('hcm_player_id');
+      if (!id) {
+        id = 'p_' + Math.random().toString(36).substring(2, 9);
+        localStorage.setItem('hcm_player_id', id);
+      }
+      return id;
+    } catch (e) {
+      return 'p_' + Math.random().toString(36).substring(2, 9);
+    }
+  });
   
   // Admin Host Authentication
   const [adminPassword, setAdminPassword] = useState('');
@@ -85,6 +104,47 @@ export default function LeaderboardRoom({
     };
   }, [mode, sessionStarted, playerId, playerName]);
 
+  // Auto-send PLAYER_LEAVE if student closes or reloads browser while waiting in lobby
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (mode === 'join' && !sessionStarted && sessionRef.current) {
+        sessionRef.current.broadcast({
+          type: 'PLAYER_LEAVE',
+          playerId,
+          name: playerName.trim()
+        });
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [mode, sessionStarted, playerId, playerName]);
+
+  // Host automatically prunes disconnected players in lobby who haven't sent a heartbeat for > 15s
+  useEffect(() => {
+    let pruneTimer = null;
+    if (mode === 'host' && hostPhase === 'lobby') {
+      pruneTimer = setInterval(() => {
+        const now = Date.now();
+        setPlayers((prev) => {
+          let changed = false;
+          const next = {};
+          for (const [id, p] of Object.entries(prev)) {
+            // Heartbeat is sent every 2.5s. If no heartbeat for > 15s, player closed tab / disconnected
+            if (p.lastSeen && (now - p.lastSeen > 15000)) {
+              changed = true;
+            } else {
+              next[id] = p;
+            }
+          }
+          return changed ? next : prev;
+        });
+      }, 3000);
+    }
+    return () => {
+      if (pruneTimer) clearInterval(pruneTimer);
+    };
+  }, [mode, hostPhase]);
+
   // Admin Host form submit
   const handleCreateHostSubmit = (e) => {
     e.preventDefault();
@@ -125,18 +185,67 @@ export default function LeaderboardRoom({
         if (sessionRef.current?.status !== 'lobby') {
           return;
         }
-        setPlayers((prev) => ({
-          ...prev,
-          [data.playerId]: {
-            name: data.name,
+        const trimmedName = (data.name || '').trim();
+        if (!trimmedName || !data.playerId) return;
+
+        setPlayers((prev) => {
+          const next = {};
+          let isBrandNew = true;
+          const targetLower = trimmedName.toLowerCase();
+
+          for (const [id, p] of Object.entries(prev)) {
+            const matchId = id === data.playerId;
+            const matchName = p.name && p.name.trim().toLowerCase() === targetLower;
+
+            if (matchId || matchName) {
+              // Existing player rejoining or heartbeat! Do NOT duplicate!
+              isBrandNew = false;
+              // Drop old key if ID changed, will re-insert with data.playerId below
+            } else {
+              next[id] = p;
+            }
+          }
+
+          next[data.playerId] = {
+            name: trimmedName,
             quarter: 1,
             stats: { people: 60, law: 60, integrity: 60, reform: 60 },
             status: 'waiting',
             score: 60,
-            rankTitle: 'Ứng viên'
+            rankTitle: 'Ứng viên',
+            lastSeen: Date.now()
+          };
+
+          if (isBrandNew) {
+            playSound('select');
           }
-        }));
-        playSound('select');
+          return next;
+        });
+      } else if (data.type === 'PLAYER_LEAVE') {
+        const targetId = data.playerId;
+        const targetName = (data.name || '').trim().toLowerCase();
+
+        setPlayers((prev) => {
+          const next = {};
+          for (const [id, p] of Object.entries(prev)) {
+            const matchId = id === targetId;
+            const matchName = targetName && p.name && p.name.trim().toLowerCase() === targetName;
+            if (sessionRef.current?.status === 'lobby') {
+              // In lobby, completely remove leaving player
+              if (!matchId && !matchName) {
+                next[id] = p;
+              }
+            } else {
+              // In live / summary, mark status as 'left'
+              if (matchId || matchName) {
+                next[id] = { ...p, status: 'left' };
+              } else {
+                next[id] = p;
+              }
+            }
+          }
+          return next;
+        });
       } else if (data.type === 'PLAYER_PROGRESS') {
         setPlayers((prev) => ({
           ...prev,
@@ -254,6 +363,10 @@ export default function LeaderboardRoom({
 
       const session = new MultiplayerSession(activeCode, false, check.sessionId);
       sessionRef.current = session;
+
+      try {
+        localStorage.setItem('hcm_player_name', trimmedName);
+      } catch (err) {}
 
       // Send join message
       session.broadcast({
@@ -375,7 +488,17 @@ export default function LeaderboardRoom({
             {mode !== 'select' && !isSessionEndedByHost && mode !== 'summary' && (
               <button
                 onClick={() => {
-                  if (sessionRef.current) sessionRef.current.close();
+                  if (sessionRef.current) {
+                    if (mode === 'join') {
+                      sessionRef.current.broadcast({
+                        type: 'PLAYER_LEAVE',
+                        playerId,
+                        name: playerName.trim()
+                      });
+                    }
+                    sessionRef.current.close();
+                    sessionRef.current = null;
+                  }
                   setMode('select');
                 }}
                 className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors mr-0.5"
@@ -914,12 +1037,31 @@ export default function LeaderboardRoom({
               )}
             </div>
 
-            {sessionStarted && (
+            {sessionStarted ? (
               <button
                 onClick={onClose}
                 className="py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md"
               >
                 Vào Bàn Làm Việc (Bắt Đầu Vuốt)
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  if (sessionRef.current) {
+                    sessionRef.current.broadcast({
+                      type: 'PLAYER_LEAVE',
+                      playerId,
+                      name: playerName.trim()
+                    });
+                    sessionRef.current.close();
+                    sessionRef.current = null;
+                  }
+                  setMode('select');
+                }}
+                className="py-2.5 px-5 rounded-xl text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-300 transition-all flex items-center justify-center gap-1.5 mx-auto shadow-xs"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Rời phòng chờ</span>
               </button>
             )}
           </div>

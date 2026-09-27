@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import Header from './components/Header';
 import IndicatorBar from './components/IndicatorBar';
@@ -41,6 +41,21 @@ export default function App() {
   const [multiplayerContext, setMultiplayerContext] = useState(null); // { session, playerId, playerName, roomCode }
   const [isSessionEndedByHost, setIsSessionEndedByHost] = useState(false);
   const [syncedPlayersList, setSyncedLeaderboardPlayers] = useState([]);
+
+  // Notify host if player closes browser tab during game
+  useEffect(() => {
+    const handleUnload = () => {
+      if (multiplayerContext?.session) {
+        multiplayerContext.session.broadcast({
+          type: 'PLAYER_LEAVE',
+          playerId: multiplayerContext.playerId,
+          name: multiplayerContext.playerName
+        });
+      }
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, [multiplayerContext]);
 
   // Restart / Reset with fresh or seeded dilemmas
   const handleRestart = (seed = null) => {
@@ -94,6 +109,11 @@ export default function App() {
   // Leave multiplayer session and return to solo
   const handleLeaveMultiplayer = () => {
     if (multiplayerContext?.session) {
+      multiplayerContext.session.broadcast({
+        type: 'PLAYER_LEAVE',
+        playerId: multiplayerContext.playerId,
+        name: multiplayerContext.playerName
+      });
       multiplayerContext.session.close();
     }
     setMultiplayerContext(null);
@@ -110,6 +130,11 @@ export default function App() {
   // Confirm go home
   const handleConfirmGoHome = () => {
     if (multiplayerContext?.session) {
+      multiplayerContext.session.broadcast({
+        type: 'PLAYER_LEAVE',
+        playerId: multiplayerContext.playerId,
+        name: multiplayerContext.playerName
+      });
       multiplayerContext.session.close();
     }
     setMultiplayerContext(null);

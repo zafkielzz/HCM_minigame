@@ -114,6 +114,23 @@ function launchStudents(sessionId) {
           })
         );
         console.log(`  [+] ${student.name} đã vào phòng chờ.`);
+
+        // Heartbeat while waiting in lobby
+        const botHeartbeat = setInterval(() => {
+          if (!sessionStarted && client.connected) {
+            client.publish(
+              `hcm/v2/room/${ROOM_CODE}/students/${studentId}`,
+              JSON.stringify({
+                type: 'PLAYER_JOIN',
+                playerId: studentId,
+                name: student.name,
+                sessionId: sessionId
+              })
+            );
+          } else {
+            clearInterval(botHeartbeat);
+          }
+        }, 3000);
       });
 
       // Play through quarters when session starts
