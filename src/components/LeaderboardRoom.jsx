@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Trophy, Users, Play, StopCircle, RefreshCw, X, Check, Copy, 
-  Crown, Medal, Award, AlertCircle, ArrowRight, UserCheck, Flame, Share2, ClipboardList 
+  Crown, Medal, Award, AlertCircle, ArrowRight, ArrowLeft, UserCheck, Flame, Share2, ClipboardList 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MultiplayerSession, generateRoomCode } from '../utils/multiplayer';
@@ -198,20 +198,25 @@ export default function LeaderboardRoom({
         {/* Top Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-200">
           <div className="flex items-center gap-2.5">
+            {mode !== 'select' && (
+              <button
+                onClick={() => {
+                  if (sessionRef.current) sessionRef.current.close();
+                  setMode('select');
+                  setIsJoined(false);
+                }}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors mr-0.5"
+                title="Quay lại"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            )}
             <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center border border-amber-300">
               <Trophy className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="title-1st text-slate-900 flex items-center gap-2">
-                <span>ĐẤU PHÒNG LỚP HỌC</span>
-                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 font-sans">
-                  Thời Gian Thực
-                </span>
-              </h2>
-              <p className="text-xs text-slate-500">
-                Thi đua trực tiếp giữa các bạn sinh viên trong lớp học môn Tư tưởng Hồ Chí Minh
-              </p>
-            </div>
+            <h2 className="title-1st text-slate-900 text-base sm:text-lg">
+              ĐẤU PHÒNG LỚP HỌC
+            </h2>
           </div>
 
           <button
@@ -224,66 +229,59 @@ export default function LeaderboardRoom({
 
         {/* Mode 1: Select Screen */}
         {mode === 'select' && (
-          <div className="py-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="py-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Host Card */}
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-amber-400 hover:bg-amber-50/30 transition-all flex flex-col justify-between group">
+            <div className="p-6 rounded-2xl bg-slate-50 border-2 border-slate-200 hover:border-amber-400 hover:bg-amber-50/20 transition-all flex flex-col justify-between group">
               <div>
-                <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-3 border border-amber-200">
+                <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-4 border border-amber-200">
                   <Crown className="w-6 h-6" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900 mb-1">
-                  1. Màn Hình Máy Chiếu (Chủ Phòng)
+                <h3 className="title-1st text-lg text-slate-900 mb-1">
+                  TẠO PHÒNG
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Dành cho <strong>Nhóm thuyết trình</strong>: Tạo mã phòng, chiếu lên màn hình lớn, chờ cả lớp vào phòng rồi bấm Bắt đầu thi đấu và theo dõi BXH trực tiếp.
-                </p>
               </div>
 
               <button
                 onClick={handleCreateHost}
                 className="mt-6 w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
               >
-                <span>Tạo phòng máy chiếu</span>
+                <span>Tạo phòng</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
 
             {/* Join Card */}
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 transition-all flex flex-col justify-between group">
+            <div className="p-6 rounded-2xl bg-slate-50 border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50/20 transition-all flex flex-col justify-between group">
               <div>
-                <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-3 border border-blue-200">
+                <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4 border border-blue-200">
                   <Users className="w-6 h-6" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900 mb-1">
-                  2. Sinh Viên Tham Gia (Điện thoại)
+                <h3 className="title-1st text-lg text-slate-900 mb-1">
+                  JOIN PHÒNG
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Dành cho <strong>các bạn sinh viên dưới lớp</strong>: Nhập họ tên và mã phòng đang chiếu trên bảng để cùng tham gia tranh tài.
-                </p>
               </div>
 
               <form onSubmit={handleJoinRoom} className="mt-4 space-y-2.5">
                 <input
                   type="text"
-                  placeholder="Họ tên (VD: Lan - Nhóm 2)"
+                  placeholder="Nickname"
                   value={playerName}
                   onChange={(e) => setPlayerName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500"
                   required
                 />
                 <input
                   type="text"
-                  placeholder="Mã phòng (VD: HCM-88)"
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 uppercase tracking-widest font-mono focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 uppercase tracking-widest font-mono focus:outline-none focus:border-blue-500"
                   required
                 />
                 <button
                   type="submit"
                   className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
                 >
-                  <span>Vào phòng thi đấu</span>
+                  <span>Vào phòng</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
@@ -298,7 +296,7 @@ export default function LeaderboardRoom({
             <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200 gap-3">
               <div>
                 <span className="text-[11px] uppercase tracking-wider text-slate-500 font-bold block mb-0.5">
-                  Mã Phòng Cho Cả Lớp Nhập:
+                  Mã phòng:
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="title-2nd text-red-600 tracking-wider">
@@ -353,12 +351,12 @@ export default function LeaderboardRoom({
               <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 text-center">
                 <div className="flex items-center justify-center gap-2 mb-2 text-sm font-bold text-slate-800">
                   <UserCheck className="w-4 h-4 text-emerald-600" />
-                  <span>Danh sách sinh viên đã vào phòng ({sortedPlayers.length}):</span>
+                  <span>Danh sách người tham gia ({sortedPlayers.length}):</span>
                 </div>
 
                 {sortedPlayers.length === 0 ? (
                   <p className="text-xs text-slate-500 italic py-6">
-                    Đang đợi các bạn sinh viên quét vào phòng {roomCode}... Hãy chiếu mã phòng lên máy chiếu!
+                    Đang đợi người chơi vào phòng {roomCode}...
                   </p>
                 ) : (
                   <div className="flex flex-wrap gap-2 justify-center max-h-56 overflow-y-auto py-2">
@@ -392,7 +390,7 @@ export default function LeaderboardRoom({
                     <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                       <tr>
                         <th className="py-2.5 px-3 w-12 text-center">#</th>
-                        <th className="py-2.5 px-3">Thí Sinh</th>
+                        <th className="py-2.5 px-3">Nickname</th>
                         <th className="py-2.5 px-3 text-center">Số Kỳ Đã Qua</th>
                         <th className="py-2.5 px-3 text-center">Tình Trạng</th>
                         <th className="py-2.5 px-3 text-right">Điểm Cân Bằng</th>
@@ -506,7 +504,7 @@ export default function LeaderboardRoom({
                       <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 sticky top-0 backdrop-blur-sm">
                         <tr>
                           <th className="py-2.5 px-3 w-12 text-center">Hạng</th>
-                          <th className="py-2.5 px-3">Họ Tên Thí Sinh</th>
+                          <th className="py-2.5 px-3">Nickname</th>
                           <th className="py-2.5 px-3 text-center">Số Kỳ Đã Trải Qua</th>
                           <th className="py-2.5 px-3 text-center">Kết Quả Nhiệm Kỳ</th>
                           <th className="py-2.5 px-3 text-right">Điểm Số</th>
@@ -566,7 +564,7 @@ export default function LeaderboardRoom({
 
             <div>
               <span className="text-xs text-slate-500 block mb-1">
-                Thí sinh: <strong className="text-slate-900">{playerName}</strong>
+                Nickname: <strong className="text-slate-900">{playerName}</strong>
               </span>
               <h3 className="text-xl font-black text-slate-900">
                 ĐÃ VÀO PHÒNG: <span className="font-mono text-red-600">{roomCode}</span>
@@ -581,7 +579,7 @@ export default function LeaderboardRoom({
                 </div>
               ) : (
                 <p>
-                  ⏳ Bạn đã điểm danh thành công! Vui lòng nhìn lên màn hình máy chiếu của nhóm thuyết trình và chờ bấm bắt đầu...
+                  ⏳ Đã vào phòng thành công! Hãy nhìn lên màn hình máy chiếu và chờ bắt đầu...
                 </p>
               )}
             </div>
@@ -596,17 +594,6 @@ export default function LeaderboardRoom({
             )}
           </div>
         )}
-
-        {/* Modal Footer */}
-        <div className="pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
-          <span>Kết nối Real-time qua SSE & Mạng phòng học</span>
-          <button
-            onClick={() => setMode('select')}
-            className="text-slate-500 hover:text-slate-800 transition-colors"
-          >
-            Quay lại chọn vai trò
-          </button>
-        </div>
       </div>
     </div>
   );
