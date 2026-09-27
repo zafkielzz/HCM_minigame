@@ -151,20 +151,21 @@ export default function LeaderboardRoom({
     setIsVerifyingRoom(true);
 
     try {
-      const check = await verifyRoom(trimmedCode);
+      const check = verifyRoom(trimmedCode);
       if (!check.valid) {
         playSound('stamp');
-        setJoinError(check.message || 'Mã phòng không tồn tại hoặc chủ phòng chưa tạo phòng!');
+        setJoinError(check.message);
         setIsVerifyingRoom(false);
         return;
       }
 
-      setRoomCode(trimmedCode);
+      const activeCode = check.code || trimmedCode;
+      setRoomCode(activeCode);
       setMode('join');
       setIsJoined(true);
       playSound('select');
 
-      const session = new MultiplayerSession(trimmedCode, false);
+      const session = new MultiplayerSession(activeCode, false);
       sessionRef.current = session;
 
       // Send join message

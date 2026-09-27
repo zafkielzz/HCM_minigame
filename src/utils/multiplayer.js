@@ -1,13 +1,15 @@
 // Real-time synchronization utility for classroom multiplayer competition
-// Utilizes public HTTPS SSE (Server-Sent Events) via ntfy.sh and browser BroadcastChannel fallback
-// Includes room registry & validation logic to prevent joining non-existent or expired rooms
+// Utilizes browser BroadcastChannel + localStorage storage event bus + public HTTPS SSE (ntfy.sh)
+// Hardcoded dedicated classroom room code: 1945 (Chỉ toàn số, không ký tự đặc biệt)
+
+export const DEFAULT_HOST_ROOM_CODE = '1945';
+export const VALID_ROOM_CODES = new Set(['1945', 'HCM', 'HCM24', 'HCM1945']);
 
 const BASE_TOPIC_PREFIX = 'hcm-vibe-';
 const STORAGE_KEY_ROOMS = 'hcm_active_rooms';
 
 /**
  * Retrieves the registry of active rooms from localStorage.
- * Automatically purges rooms older than 12 hours.
  */
 export function getActiveRooms() {
   try {
@@ -30,7 +32,7 @@ export function getActiveRooms() {
 /**
  * Registers an active host room.
  */
-export function registerHostRoom(roomCode, status = 'lobby') {
+export function registerHostRoom(roomCode = DEFAULT_HOST_ROOM_CODE, status = 'lobby') {
   try {
     const code = roomCode.trim().toUpperCase();
     const rooms = getActiveRooms();
@@ -48,7 +50,7 @@ export function registerHostRoom(roomCode, status = 'lobby') {
 /**
  * Updates status of an existing host room ('lobby' | 'live' | 'summary').
  */
-export function updateHostRoomStatus(roomCode, status) {
+export function updateHostRoomStatus(roomCode = DEFAULT_HOST_ROOM_CODE, status) {
   try {
     const code = roomCode.trim().toUpperCase();
     const rooms = getActiveRooms();
@@ -63,9 +65,9 @@ export function updateHostRoomStatus(roomCode, status) {
 }
 
 /**
- * Unregisters a host room when host leaves or closes session.
+ * Unregisters a host room.
  */
-export function unregisterHostRoom(roomCode) {
+export function unregisterHostRoom(roomCode = DEFAULT_HOST_ROOM_CODE) {
   try {
     const code = roomCode.trim().toUpperCase();
     const rooms = getActiveRooms();
@@ -77,87 +79,50 @@ export function unregisterHostRoom(roomCode) {
 }
 
 /**
- * Verifies if a room exists and is currently accepting participants.
- * Combines localStorage fast lookup and BroadcastChannel ping-pong fallback.
+ * Verifies if a room code is valid.
+ * - Dedicated room code: 1945 (Chỉ số, mang ý nghĩa lịch sử Tuyên ngôn Độc lập)
+ * - Returns { valid: true, code } if correct, or { valid: false, message } if incorrect.
  */
-export async function verifyRoom(roomCode) {
+export function verifyRoom(roomCode) {
   const code = (roomCode || '').trim().toUpperCase();
   if (!code) {
-    return { valid: false, message: 'Vui lòng nhập mã phòng.' };
+    return { valid: false, message: 'Vui lòng nhập Mã phòng.' };
   }
 
-  // 1. Fast check via localStorage active registry
+  const isHardcodedValid = VALID_ROOM_CODES.has(code);
   const localRooms = getActiveRooms();
-  if (localRooms[code]) {
-    const room = localRooms[code];
+  const isRegisteredValid = Boolean(localRooms[code]);
+
+  if (!isHardcodedValid && !isRegisteredValid) {
+    return { 
+      valid: false, 
+      message: `Mã phòng không chính xác! Vui lòng nhập đúng mã phòng trên máy chiếu (${DEFAULT_HOST_ROOM_CODE}).` 
+    };
+  }
+
+  // Check if active host is already in 'live' or 'summary'
+  const room = localRooms[code];
+  if (room) {
     if (room.status === 'live') {
       return { valid: false, message: 'Phòng thi đấu này đã bắt đầu! Không thể tham gia giữa chừng.' };
     }
     if (room.status === 'summary') {
       return { valid: false, message: 'Phòng thi đấu này đã kết thúc!' };
     }
-    return { valid: true, room };
   }
 
-  // 2. BroadcastChannel Ping-Pong fallback (for isolated incognito or cross-context host)
-  if (typeof window !== 'undefined' && window.BroadcastChannel) {
-    const checkPromise = new Promise((resolve) => {
-      let channel = null;
-      let timer = null;
-      let finished = false;
-
-      const finish = (result) => {
-        if (!finished) {
-          finished = true;
-          if (timer) clearTimeout(timer);
-          if (channel) {
-            try { channel.close(); } catch (e) {}
-          }
-          resolve(result);
-        }
-      };
-
-      try {
-        channel = new BroadcastChannel(`hcm-channel-${code}`);
-        channel.onmessage = (event) => {
-          const data = event.data;
-          if (data && (data.type === 'PONG_ROOM' || data.type === 'ROOM_HEARTBEAT' || data.type === 'SESSION_START')) {
-            if (data.status === 'live') {
-              finish({ valid: false, message: 'Phòng thi đấu này đã bắt đầu! Không thể tham gia giữa chừng.' });
-            } else if (data.status === 'summary') {
-              finish({ valid: false, message: 'Phòng thi đấu này đã kết thúc!' });
-            } else {
-              finish({ valid: true });
-            }
-          }
-        };
-
-        // Ping host
-        channel.postMessage({ type: 'PING_ROOM', roomCode: code });
-
-        // Wait up to 350ms for local channel response
-        timer = setTimeout(() => {
-          finish({ valid: false, message: 'Mã phòng không tồn tại hoặc chủ phòng chưa tạo phòng!' });
-        }, 350);
-      } catch (err) {
-        finish({ valid: false, message: 'Mã phòng không tồn tại hoặc chủ phòng chưa tạo phòng!' });
-      }
-    });
-
-    return await checkPromise;
-  }
-
-  return { valid: false, message: 'Mã phòng không tồn tại hoặc chủ phòng chưa tạo phòng!' };
+  return { valid: true, code };
 }
 
 export class MultiplayerSession {
-  constructor(roomCode, isHost = false) {
+  constructor(roomCode = DEFAULT_HOST_ROOM_CODE, isHost = false) {
     this.roomCode = roomCode.trim().toUpperCase();
     this.isHost = isHost;
     this.status = isHost ? 'lobby' : null;
     this.topic = `${BASE_TOPIC_PREFIX}${this.roomCode.toLowerCase()}`;
     this.eventSource = null;
     this.broadcastChannel = null;
+    this.storageListener = null;
     this.listeners = [];
 
     this.init();
@@ -169,26 +134,33 @@ export class MultiplayerSession {
       if (typeof window !== 'undefined' && window.BroadcastChannel) {
         this.broadcastChannel = new BroadcastChannel(`hcm-channel-${this.roomCode}`);
         this.broadcastChannel.onmessage = (event) => {
-          const data = event.data;
-          // If host receives ping from joining client, respond with current status
-          if (this.isHost && data?.type === 'PING_ROOM') {
-            try {
-              this.broadcastChannel.postMessage({
-                type: 'PONG_ROOM',
-                roomCode: this.roomCode,
-                status: this.status || 'lobby'
-              });
-            } catch (e) {}
-            return;
-          }
-          this.notify(data);
+          this.notify(event.data);
         };
       }
     } catch (e) {
       console.warn("BroadcastChannel not supported", e);
     }
 
-    // 2. Setup Server-Sent Events (SSE) via ntfy.sh for cross-device Internet sync
+    // 2. Setup LocalStorage storage event bus for indestructible cross-tab sync
+    try {
+      if (typeof window !== 'undefined') {
+        this.storageListener = (e) => {
+          if (e.key === `hcm_bus_${this.roomCode}` && e.newValue) {
+            try {
+              const payload = JSON.parse(e.newValue);
+              if (payload) {
+                this.notify(payload);
+              }
+            } catch (err) {}
+          }
+        };
+        window.addEventListener('storage', this.storageListener);
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // 3. Setup Server-Sent Events (SSE) via ntfy.sh for cross-device internet sync
     try {
       const sseUrl = `https://ntfy.sh/${this.topic}/sse`;
       this.eventSource = new EventSource(sseUrl);
@@ -198,28 +170,15 @@ export class MultiplayerSession {
           const envelope = JSON.parse(event.data);
           if (envelope.message) {
             const payload = JSON.parse(envelope.message);
-            // If host receives ping via SSE
-            if (this.isHost && payload?.type === 'PING_ROOM') {
-              this.broadcast({
-                type: 'PONG_ROOM',
-                roomCode: this.roomCode,
-                status: this.status || 'lobby'
-              });
-              return;
-            }
             this.notify(payload);
           }
-        } catch (err) {
-          // Non-JSON or handshake event, ignore
-        }
+        } catch (err) {}
       };
 
-      this.eventSource.onerror = (err) => {
-        // SSE connection retry...
+      this.eventSource.onerror = () => {
+        // SSE connection retry suppressed
       };
-    } catch (e) {
-      console.warn("SSE initialization error", e);
-    }
+    } catch (e) {}
   }
 
   setStatus(status) {
@@ -229,7 +188,6 @@ export class MultiplayerSession {
     }
   }
 
-  // Subscribe to room messages
   onMessage(callback) {
     this.listeners.push(callback);
     return () => {
@@ -247,32 +205,42 @@ export class MultiplayerSession {
     });
   }
 
-  // Broadcast event to all devices in the room
   async broadcast(data) {
-    // Send to local BroadcastChannel first (0ms latency for local tabs)
+    // A. Local BroadcastChannel
     if (this.broadcastChannel) {
       try {
         this.broadcastChannel.postMessage(data);
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
     }
 
-    // Send to ntfy.sh cloud broker for all phones / remote devices
+    // B. LocalStorage bus
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(`hcm_bus_${this.roomCode}`, JSON.stringify({
+          ...data,
+          _busId: Math.random(),
+          _busTime: Date.now()
+        }));
+      }
+    } catch (e) {}
+
+    // C. Cloud SSE broker (ntfy.sh)
     try {
       await fetch(`https://ntfy.sh/${this.topic}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-    } catch (e) {
-      // Cloud fallback warning suppressed
-    }
+    } catch (e) {}
   }
 
   close() {
     if (this.isHost) {
       unregisterHostRoom(this.roomCode);
+    }
+    if (this.storageListener && typeof window !== 'undefined') {
+      window.removeEventListener('storage', this.storageListener);
+      this.storageListener = null;
     }
     if (this.eventSource) {
       this.eventSource.close();
@@ -286,10 +254,7 @@ export class MultiplayerSession {
   }
 }
 
-// Generate easy 4-character room code (e.g. HCM-88, BOC-62)
+// Generate room code: Always returns dedicated clean room code '1945'
 export function generateRoomCode() {
-  const prefixes = ['HCM', 'BOC', 'DVC', 'DAN', 'MINH'];
-  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-  const num = Math.floor(10 + Math.random() * 89);
-  return `${prefix}-${num}`;
+  return DEFAULT_HOST_ROOM_CODE;
 }
