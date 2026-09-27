@@ -73,6 +73,25 @@ export default function LeaderboardRoom({
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedRankingReport, setCopiedRankingReport] = useState(false);
   const sessionRef = useRef(null);
+  const sessionStartHandledRef = useRef(false);
+
+  // Student auto-transition to game questions when session starts
+  const handleTriggerStudentStartGame = (incomingSessionId) => {
+    if (sessionStartHandledRef.current) return;
+    sessionStartHandledRef.current = true;
+    setSessionStarted(true);
+    playSound('select');
+    onClose(); // Auto-close modal immediately so the question card is displayed!
+    if (onStartSoloWithSession && sessionRef.current) {
+      onStartSoloWithSession({
+        session: sessionRef.current,
+        playerId,
+        playerName: playerName.trim(),
+        roomCode: roomCode || DEFAULT_HOST_ROOM_CODE,
+        sessionId: incomingSessionId || sessionRef.current.sessionId
+      });
+    }
+  };
 
   // Auto-switch to summary when host ends session
   useEffect(() => {
@@ -90,19 +109,23 @@ export default function LeaderboardRoom({
     };
   }, []);
 
-  // Announce and refresh presence for student while in lobby waiting
+  // Announce and refresh presence for student while in lobby waiting & auto-detect live start
   useEffect(() => {
     let joinHeartbeat = null;
     if (mode === 'join' && !sessionStarted && sessionRef.current) {
       joinHeartbeat = setInterval(() => {
         if (sessionRef.current && mode === 'join' && !sessionStarted) {
+          if (sessionRef.current.status === 'live') {
+            handleTriggerStudentStartGame(sessionRef.current.sessionId);
+            return;
+          }
           sessionRef.current.broadcast({
             type: 'PLAYER_JOIN',
             playerId,
             name: playerName.trim()
           });
         }
-      }, 2500);
+      }, 2000);
     }
     return () => {
       if (joinHeartbeat) clearInterval(joinHeartbeat);
@@ -448,22 +471,10 @@ export default function LeaderboardRoom({
       });
 
       // Listen for Host signals
-      let sessionStartHandled = false;
+      sessionStartHandledRef.current = false;
       session.onMessage((data) => {
-        if (data.type === 'SESSION_START' && !sessionStartHandled) {
-          sessionStartHandled = true;
-          setSessionStarted(true);
-          playSound('select');
-          onClose(); // Auto-close modal immediately so the question card is displayed!
-          if (onStartSoloWithSession) {
-            onStartSoloWithSession({
-              session,
-              playerId,
-              playerName: trimmedName,
-              roomCode: activeCode,
-              sessionId: data.sessionId || check.sessionId
-            });
-          }
+        if (data.type === 'SESSION_START') {
+          handleTriggerStudentStartGame(data.sessionId || check.sessionId);
         } else if (data.type === 'SESSION_END') {
           if (data.playersList) {
             setExternalPlayersList(data.playersList);
@@ -1146,7 +1157,7 @@ export default function LeaderboardRoom({
 
             {sessionStarted ? (
               <button
-                onClick={onClose}
+                onClick={() => handleTriggerStudentStartGame()}
                 className="py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md"
               >
                 Vào Bàn Làm Việc (Bắt Đầu Vuốt)
@@ -1154,6 +1165,8 @@ export default function LeaderboardRoom({
             ) : (
               <button
                 onClick={() => {
+                  sessionStartHandledRef.current = false;
+                  setSessionStarted(false);
                   if (sessionRef.current) {
                     sessionRef.current.broadcast({
                       type: 'PLAYER_LEAVE',

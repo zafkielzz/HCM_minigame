@@ -365,19 +365,19 @@ export class MultiplayerSession {
           if (topic === `hcm/v2/room/${this.roomCode}/state`) {
             // Retained state update from host
             if (!this.isHost) {
-              if (data.sessionId && !this.sessionId) {
+              if (data.sessionId) {
                 this.sessionId = data.sessionId;
               }
-              if (data.status === 'live' && !this.sessionStartFired) {
-                // Only fire SESSION_START ONCE — ignore subsequent retained state re-deliveries
-                this.sessionStartFired = true;
+              if (data.status === 'live') {
                 this.handleIncoming({ type: 'SESSION_START', ...data });
               } else if (data.status === 'summary') {
                 this.handleIncoming({ type: 'SESSION_END', ...data });
               } else if (data.status === 'closed') {
                 this.handleIncoming({ type: 'ROOM_CLOSED', ...data });
+              } else if (data.status === 'lobby') {
+                this.sessionStartFired = false;
+                this.handleIncoming({ type: 'ROOM_STATE', ...data });
               }
-              // Ignore repeated 'live' status messages after the first one
             }
             return;
           }
@@ -413,30 +413,39 @@ export class MultiplayerSession {
   handleIncoming(data) {
     if (!data || this.closed) return;
 
-    // Filter out messages from different / old sessions
-    // EXCEPTION: Host in lobby always accepts PLAYER_JOIN (safe after explicit reset)
-    if (this.sessionId && data.sessionId && data.sessionId !== this.sessionId) {
-      const isHostLobbyJoin = this.isHost && this.status === 'lobby' && data.type === 'PLAYER_JOIN';
-      if (!isHostLobbyJoin) {
-        return;
-      }
-    }
-
-    // Guard: if SESSION_START already fired, don't fire it again from any transport
-    if (!this.isHost && data.type === 'SESSION_START') {
-      if (this.sessionStartFired) return; // Already processed
-      this.sessionStartFired = true;
-    }
-
     if (this.isHost) {
       // Host handles student join, progress, finish
+      // Host in lobby always accepts PLAYER_JOIN (safe after explicit reset)
+      if (this.sessionId && data.sessionId && data.sessionId !== this.sessionId) {
+        const isHostLobbyJoin = this.status === 'lobby' && data.type === 'PLAYER_JOIN';
+        if (!isHostLobbyJoin) {
+          return;
+        }
+      }
       this.notify(data);
     } else {
-      // Student only cares about host control signals (SESSION_START, SESSION_END, ROOM_STATE, ROOM_CLOSED)
-      if (
-        data.type === 'SESSION_START' ||
+      // Student handles Host control signals (SESSION_START, SESSION_END, ROOM_STATE, ROOM_CLOSED)
+      // For student, Host is authoritative for this.roomCode: always sync sessionId and status
+      if (data.sessionId) {
+        this.sessionId = data.sessionId;
+      }
+      if (data.status) {
+        this.status = data.status;
+      }
+
+      if (data.type === 'SESSION_START') {
+        // Prevent duplicate trigger: only notify ONCE per game round
+        if (this.sessionStartFired) return;
+        this.sessionStartFired = true;
+        this.status = 'live';
+        this.notify(data);
+      } else if (data.type === 'ROOM_STATE') {
+        if (data.status === 'lobby') {
+          this.sessionStartFired = false;
+        }
+        this.notify(data);
+      } else if (
         data.type === 'SESSION_END' ||
-        data.type === 'ROOM_STATE' ||
         data.type === 'ROOM_CLOSED'
       ) {
         this.notify(data);
