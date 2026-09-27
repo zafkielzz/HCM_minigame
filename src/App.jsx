@@ -9,7 +9,7 @@ import HandbookModal from './components/HandbookModal';
 import LeaderboardRoom from './components/LeaderboardRoom';
 import ConfirmModal from './components/ConfirmModal';
 
-import { DILEMMAS } from './data/dilemmas';
+import { DILEMMAS, getShuffledDilemmas } from './data/dilemmas';
 import { ENDINGS, getTitleByPerformance } from './data/endings';
 
 const INITIAL_STATS = {
@@ -26,6 +26,9 @@ export default function App() {
   const [currentResult, setCurrentResult] = useState(null);
   const [activeEnding, setActiveEnding] = useState(null);
 
+  // Dilemmas with balanced & randomized A/B options
+  const [dilemmas, setDilemmas] = useState(() => getShuffledDilemmas());
+
   // Modals & settings
   const [isHandbookOpen, setIsHandbookOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
@@ -36,8 +39,10 @@ export default function App() {
   const [multiplayerContext, setMultiplayerContext] = useState(null); // { session, playerId, playerName, roomCode }
   const [isSessionEndedByHost, setIsSessionEndedByHost] = useState(false);
 
-  // Restart / Reset
-  const handleRestart = () => {
+  // Restart / Reset with fresh or seeded dilemmas
+  const handleRestart = (seed = null) => {
+    const activeSeed = seed !== undefined && seed !== null ? seed : (multiplayerContext?.roomCode || null);
+    setDilemmas(getShuffledDilemmas(activeSeed));
     setStats(INITIAL_STATS);
     setCurrentQuarter(1);
     setCurrentResult(null);
@@ -49,7 +54,7 @@ export default function App() {
   const handleStart = () => {
     setMultiplayerContext(null);
     setIsSessionEndedByHost(false);
-    handleRestart();
+    handleRestart(null);
   };
 
   // Start game triggered from joined multiplayer room
@@ -65,7 +70,7 @@ export default function App() {
       }
     });
 
-    handleRestart();
+    handleRestart(sessionData.roomCode);
   };
 
   // Leave multiplayer session and return to solo
@@ -75,7 +80,7 @@ export default function App() {
     }
     setMultiplayerContext(null);
     setIsSessionEndedByHost(false);
-    handleRestart();
+    handleRestart(null);
   };
 
   // Request go home (prompts confirmation if active)
@@ -91,6 +96,7 @@ export default function App() {
     }
     setMultiplayerContext(null);
     setIsSessionEndedByHost(false);
+    setDilemmas(getShuffledDilemmas(null));
     setCurrentQuarter(1);
     setStats(INITIAL_STATS);
     setCurrentResult(null);
@@ -101,7 +107,7 @@ export default function App() {
 
   // Calculate new stats and check game over
   const handleMakeChoice = (choiceKey) => {
-    const dilemma = DILEMMAS[currentQuarter - 1];
+    const dilemma = dilemmas[currentQuarter - 1] || dilemmas[0];
     const choice = choiceKey === 'left' ? dilemma.leftChoice : dilemma.rightChoice;
     const impact = choice.impact;
 
@@ -128,7 +134,7 @@ export default function App() {
       triggeredEnding = ENDINGS.POPULISM_TRAP;
     } else if (newStats.law >= 90 && newStats.people <= 20) {
       triggeredEnding = ENDINGS.AUTHORITARIAN_TRAP;
-    } else if (currentQuarter >= DILEMMAS.length) {
+    } else if (currentQuarter >= dilemmas.length) {
       triggeredEnding = ENDINGS.VICTORY;
     }
 
@@ -185,7 +191,7 @@ export default function App() {
     setCurrentResult(null);
   };
 
-  const currentDilemma = DILEMMAS[currentQuarter - 1] || DILEMMAS[0];
+  const currentDilemma = dilemmas[currentQuarter - 1] || dilemmas[0];
 
   return (
     <div className="min-h-screen text-slate-800 flex flex-col justify-between p-3 sm:p-5 relative overflow-x-hidden">
@@ -219,7 +225,7 @@ export default function App() {
             <div className="space-y-2.5 max-w-2xl mx-auto w-full">
               <Header
                 currentQuarter={currentQuarter}
-                totalQuarters={DILEMMAS.length}
+                totalQuarters={dilemmas.length}
                 onOpenHandbook={() => setIsHandbookOpen(true)}
                 onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
                 isMuted={isMuted}
