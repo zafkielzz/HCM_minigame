@@ -412,8 +412,12 @@ export class MultiplayerSession {
     if (!data || this.closed) return;
 
     // Filter out messages from different / old sessions
+    // EXCEPTION: Host in lobby always accepts PLAYER_JOIN (safe after explicit reset)
     if (this.sessionId && data.sessionId && data.sessionId !== this.sessionId) {
-      return;
+      const isHostLobbyJoin = this.isHost && this.status === 'lobby' && data.type === 'PLAYER_JOIN';
+      if (!isHostLobbyJoin) {
+        return;
+      }
     }
 
     // Guard: if SESSION_START already fired, don't fire it again from any transport
@@ -448,8 +452,21 @@ export class MultiplayerSession {
   resetSession() {
     this.sessionId = 's_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
     this.status = 'lobby';
+    this.sessionStartFired = false;
+    this.outboxQueue = [];
     registerHostRoom(this.roomCode, 'lobby', this.sessionId);
-    this.publishRetainedState('lobby');
+
+    // Ensure MQTT is connected and re-subscribe before publishing new state
+    if (this.mqttClient && this.mqttClient.connected) {
+      // Re-subscribe to ensure we're receiving student messages
+      this.mqttClient.subscribe(`hcm/v2/room/${this.roomCode}/students/#`, { qos: 0 });
+      this.mqttClient.subscribe(`hcm/v2/room/${this.roomCode}/ping`, { qos: 0 });
+      this.publishRetainedState('lobby');
+    } else {
+      // MQTT dropped — force reconnect, retained state will publish on connect
+      this.connectMQTT(0);
+    }
+
     this.broadcast({
       type: 'ROOM_STATE',
       roomCode: this.roomCode,
