@@ -4,7 +4,14 @@ import {
   Crown, Medal, Award, AlertCircle, ArrowRight, ArrowLeft, UserCheck, Flame, Share2, ClipboardList 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { MultiplayerSession, generateRoomCode } from '../utils/multiplayer';
+import { 
+  MultiplayerSession, 
+  generateRoomCode, 
+  verifyRoom, 
+  registerHostRoom, 
+  updateHostRoomStatus, 
+  unregisterHostRoom 
+} from '../utils/multiplayer';
 import { playSound } from '../utils/sound';
 
 export default function LeaderboardRoom({ 
@@ -26,6 +33,8 @@ export default function LeaderboardRoom({
   // Client state
   const [isJoined, setIsJoined] = useState(false);
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [joinError, setJoinError] = useState(null);
+  const [isVerifyingRoom, setIsVerifyingRoom] = useState(false);
 
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedRankingReport, setCopiedRankingReport] = useState(false);
@@ -48,7 +57,10 @@ export default function LeaderboardRoom({
     setHostPhase('lobby');
     setPlayers({});
 
+    registerHostRoom(code, 'lobby');
+
     const session = new MultiplayerSession(code, true);
+    session.setStatus('lobby');
     sessionRef.current = session;
 
     session.onMessage((data) => {
@@ -98,6 +110,7 @@ export default function LeaderboardRoom({
   // Host starts the session
   const handleHostStart = () => {
     if (sessionRef.current) {
+      sessionRef.current.setStatus('live');
       sessionRef.current.broadcast({ type: 'SESSION_START' });
       setHostPhase('live');
       playSound('select');
@@ -107,6 +120,7 @@ export default function LeaderboardRoom({
   // Host ends and summarizes the session
   const handleHostEnd = () => {
     if (sessionRef.current) {
+      sessionRef.current.setStatus('summary');
       sessionRef.current.broadcast({ type: 'SESSION_END' });
       setHostPhase('summary');
       playSound('victory');
@@ -118,42 +132,68 @@ export default function LeaderboardRoom({
     }
   };
 
-  // Student joins a room
-  const handleJoinRoom = (e) => {
+  // Student joins a room with verification
+  const handleJoinRoom = async (e) => {
     e.preventDefault();
-    if (!playerName.trim() || !roomCode.trim()) return;
+    setJoinError(null);
+    const trimmedName = playerName.trim();
+    const trimmedCode = roomCode.trim().toUpperCase();
 
-    const formattedCode = roomCode.trim().toUpperCase();
-    setRoomCode(formattedCode);
-    setMode('join');
+    if (!trimmedName) {
+      setJoinError('Vui lòng nhập Nickname.');
+      return;
+    }
+    if (!trimmedCode) {
+      setJoinError('Vui lòng nhập Mã phòng.');
+      return;
+    }
 
-    const session = new MultiplayerSession(formattedCode, false);
-    sessionRef.current = session;
+    setIsVerifyingRoom(true);
 
-    // Send join message
-    session.broadcast({
-      type: 'PLAYER_JOIN',
-      playerId,
-      name: playerName.trim()
-    });
-
-    setIsJoined(true);
-
-    // Listen for Host signals
-    session.onMessage((data) => {
-      if (data.type === 'SESSION_START') {
-        setSessionStarted(true);
-        playSound('select');
-        if (onStartSoloWithSession) {
-          onStartSoloWithSession({
-            session,
-            playerId,
-            playerName: playerName.trim(),
-            roomCode: formattedCode
-          });
-        }
+    try {
+      const check = await verifyRoom(trimmedCode);
+      if (!check.valid) {
+        playSound('stamp');
+        setJoinError(check.message || 'Mã phòng không tồn tại hoặc chủ phòng chưa tạo phòng!');
+        setIsVerifyingRoom(false);
+        return;
       }
-    });
+
+      setRoomCode(trimmedCode);
+      setMode('join');
+      setIsJoined(true);
+      playSound('select');
+
+      const session = new MultiplayerSession(trimmedCode, false);
+      sessionRef.current = session;
+
+      // Send join message
+      session.broadcast({
+        type: 'PLAYER_JOIN',
+        playerId,
+        name: trimmedName
+      });
+
+      // Listen for Host signals
+      session.onMessage((data) => {
+        if (data.type === 'SESSION_START') {
+          setSessionStarted(true);
+          playSound('select');
+          if (onStartSoloWithSession) {
+            onStartSoloWithSession({
+              session,
+              playerId,
+              playerName: trimmedName,
+              roomCode: trimmedCode
+            });
+          }
+        }
+      });
+    } catch (err) {
+      setJoinError('Không thể kết nối đến phòng thi đấu.');
+    } finally {
+      setIsVerifyingRoom(false);
+    }
   };
 
   // Sort players for leaderboard:
@@ -266,7 +306,10 @@ export default function LeaderboardRoom({
                   type="text"
                   placeholder="Nickname"
                   value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
+                  onChange={(e) => {
+                    setPlayerName(e.target.value);
+                    if (joinError) setJoinError(null);
+                  }}
                   className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500"
                   required
                 />
@@ -274,16 +317,37 @@ export default function LeaderboardRoom({
                   type="text"
                   placeholder="Mã phòng"
                   value={roomCode}
-                  onChange={(e) => setRoomCode(e.target.value)}
+                  onChange={(e) => {
+                    setRoomCode(e.target.value);
+                    if (joinError) setJoinError(null);
+                  }}
                   className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 placeholder:normal-case uppercase tracking-widest font-mono focus:outline-none focus:border-blue-500"
                   required
                 />
+
+                {joinError && (
+                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 animate-fadeIn">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                    <span className="font-semibold">{joinError}</span>
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+                  disabled={isVerifyingRoom}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
                 >
-                  <span>Vào phòng</span>
-                  <ArrowRight className="w-4 h-4" />
+                  {isVerifyingRoom ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Đang kiểm tra phòng...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Vào phòng</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
               </form>
             </div>
@@ -337,6 +401,7 @@ export default function LeaderboardRoom({
                     onClick={() => {
                       setHostPhase('lobby');
                       setPlayers({});
+                      if (sessionRef.current) sessionRef.current.setStatus('lobby');
                     }}
                     className="w-full sm:w-auto py-3 px-5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
                   >
