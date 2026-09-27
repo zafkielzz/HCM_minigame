@@ -272,9 +272,10 @@ export default function LeaderboardRoom({
                 />
                 <input
                   type="text"
+                  placeholder="Mã phòng"
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 uppercase tracking-widest font-mono focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 placeholder:normal-case uppercase tracking-widest font-mono focus:outline-none focus:border-blue-500"
                   required
                 />
                 <button
