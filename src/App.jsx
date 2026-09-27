@@ -300,8 +300,6 @@ export default function App() {
       <LeaderboardRoom
         isOpen={isLeaderboardOpen}
         onClose={() => setIsLeaderboardOpen(false)}
-        currentQuarter={currentQuarter}
-        stats={stats}
         onStartSoloWithSession={handleStartSoloWithSession}
         multiplayerContext={multiplayerContext}
         isSessionEndedByHost={isSessionEndedByHost}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Trophy, Users, Play, StopCircle, RefreshCw, X, Check, Copy, 
-  Crown, Medal, Award, AlertCircle, ArrowRight, ArrowLeft, UserCheck, Flame, Share2, ClipboardList,
+  Crown, AlertCircle, ArrowRight, ArrowLeft, UserCheck, Flame, ClipboardList,
   Eye, EyeOff, Lock, LogOut
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -19,8 +19,6 @@ import { playSound } from '../utils/sound';
 export default function LeaderboardRoom({ 
   isOpen, 
   onClose, 
-  currentQuarter, 
-  stats, 
   onStartSoloWithSession,
   multiplayerContext,
   isSessionEndedByHost = false,
@@ -44,7 +42,6 @@ export default function LeaderboardRoom({
   
   // Client synchronized state
   const [externalPlayersList, setExternalPlayersList] = useState(null);
-  const [isJoined, setIsJoined] = useState(Boolean(multiplayerContext));
   const [sessionStarted, setSessionStarted] = useState(false);
   const [joinError, setJoinError] = useState(null);
   const [isVerifyingRoom, setIsVerifyingRoom] = useState(false);
@@ -234,7 +231,6 @@ export default function LeaderboardRoom({
       const activeCode = check.code || trimmedCode;
       setRoomCode(activeCode);
       setMode('join');
-      setIsJoined(true);
       playSound('select');
 
       const session = new MultiplayerSession(activeCode, false);
@@ -280,18 +276,31 @@ export default function LeaderboardRoom({
     }
   };
 
+  // Sort host players for lobby & live views
+  const hostPlayersList = Object.entries(players)
+    .map(([id, p]) => ({ id, ...p }))
+    .sort((a, b) => {
+      if (b.quarter !== a.quarter) return b.quarter - a.quarter;
+      return (b.score || 0) - (a.score || 0);
+    });
+
+  // Explicit sortedPlayers reference ensures host lobby & live table NEVER crash
+  const sortedPlayers = hostPlayersList;
+
   // Sort players for leaderboard:
   // Priority: 1. syncedPlayersList from props | 2. externalPlayersList from SSE | 3. host local players
   const rawList = (syncedPlayersList && syncedPlayersList.length > 0)
     ? syncedPlayersList
     : (externalPlayersList && externalPlayersList.length > 0)
       ? externalPlayersList
-      : Object.entries(players).map(([id, p]) => ({ id, ...p }));
+      : hostPlayersList;
 
-  const effectivePlayersList = [...rawList].sort((a, b) => {
-    if (b.quarter !== a.quarter) return b.quarter - a.quarter;
-    return (b.score || 0) - (a.score || 0);
-  });
+  const effectivePlayersList = (syncedPlayersList && syncedPlayersList.length > 0) || (externalPlayersList && externalPlayersList.length > 0)
+    ? [...rawList].sort((a, b) => {
+        if (b.quarter !== a.quarter) return b.quarter - a.quarter;
+        return (b.score || 0) - (a.score || 0);
+      })
+    : hostPlayersList;
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(roomCode);
@@ -344,7 +353,6 @@ export default function LeaderboardRoom({
                 onClick={() => {
                   if (sessionRef.current) sessionRef.current.close();
                   setMode('select');
-                  setIsJoined(false);
                 }}
                 className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors mr-0.5"
                 title="Quay lại"
@@ -733,24 +741,6 @@ export default function LeaderboardRoom({
                   >
                     {copiedCode ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                   </button>
-                  {hostPhase === 'lobby' && (
-                    <button
-                      onClick={() => {
-                        const nextCode = generateRoomCode(true);
-                        setRoomCode(nextCode);
-                        if (sessionRef.current) sessionRef.current.close();
-                        const newSession = new MultiplayerSession(nextCode, true);
-                        newSession.setStatus('lobby');
-                        sessionRef.current = newSession;
-                        setPlayers({});
-                      }}
-                      className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs transition-colors shadow-sm flex items-center gap-1 font-sans"
-                      title="Đổi mã phòng khác (HCM24, HCM60, HCM88...)"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-                      <span className="text-[10px] font-bold">Đổi mã</span>
-                    </button>
-                  )}
                 </div>
 
                 {/* Visual Room Lifecycle Badge */}
