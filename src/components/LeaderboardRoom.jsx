@@ -233,14 +233,15 @@ export default function LeaderboardRoom({
       setMode('join');
       playSound('select');
 
-      const session = new MultiplayerSession(activeCode, false);
+      const session = new MultiplayerSession(activeCode, false, check.sessionId);
       sessionRef.current = session;
 
       // Send join message
       session.broadcast({
         type: 'PLAYER_JOIN',
         playerId,
-        name: trimmedName
+        name: trimmedName,
+        sessionId: check.sessionId
       });
 
       // Listen for Host signals
@@ -248,12 +249,14 @@ export default function LeaderboardRoom({
         if (data.type === 'SESSION_START') {
           setSessionStarted(true);
           playSound('select');
+          onClose(); // Auto-close modal immediately so the question card is displayed!
           if (onStartSoloWithSession) {
             onStartSoloWithSession({
               session,
               playerId,
               playerName: trimmedName,
-              roomCode: activeCode
+              roomCode: activeCode,
+              sessionId: data.sessionId || check.sessionId
             });
           }
         } else if (data.type === 'SESSION_END') {
@@ -410,15 +413,8 @@ export default function LeaderboardRoom({
                       setHostPhase('lobby');
                       setPlayers({});
                       if (sessionRef.current) {
-                        sessionRef.current.setStatus('lobby');
-                        sessionRef.current.broadcast({
-                          type: 'ROOM_STATE',
-                          roomCode,
-                          status: 'lobby',
-                          hostTime: Date.now()
-                        });
+                        sessionRef.current.resetSession();
                       }
-                      updateHostRoomStatus(roomCode, 'lobby');
                     }}
                     className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-md w-full sm:w-auto shrink-0"
                   >
