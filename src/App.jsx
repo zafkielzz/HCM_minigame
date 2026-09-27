@@ -32,6 +32,7 @@ export default function App() {
 
   // Multiplayer session context (if joined a room)
   const [multiplayerContext, setMultiplayerContext] = useState(null); // { session, playerId, playerName, roomCode }
+  const [isSessionEndedByHost, setIsSessionEndedByHost] = useState(false);
 
   // Restart / Reset
   const handleRestart = () => {
@@ -42,15 +43,36 @@ export default function App() {
     setGameStatus('playing');
   };
 
-  // Start game from intro
+  // Start game from intro (solo mode)
   const handleStart = () => {
+    setMultiplayerContext(null);
+    setIsSessionEndedByHost(false);
     handleRestart();
   };
 
   // Start game triggered from joined multiplayer room
   const handleStartSoloWithSession = (sessionData) => {
     setMultiplayerContext(sessionData);
+    setIsSessionEndedByHost(false);
     setIsLeaderboardOpen(false);
+
+    // Listen for Host end session signal
+    sessionData.session.onMessage((data) => {
+      if (data.type === 'SESSION_END') {
+        setIsSessionEndedByHost(true);
+      }
+    });
+
+    handleRestart();
+  };
+
+  // Leave multiplayer session and return to solo
+  const handleLeaveMultiplayer = () => {
+    if (multiplayerContext?.session) {
+      multiplayerContext.session.close();
+    }
+    setMultiplayerContext(null);
+    setIsSessionEndedByHost(false);
     handleRestart();
   };
 
@@ -144,7 +166,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-3 sm:p-6 relative overflow-x-hidden">
-      {/* Main Container - Expanded width for spacious readability */}
+      {/* Main Container */}
       <div className="w-full max-w-2xl mx-auto flex-1 flex flex-col justify-between relative z-10">
         {gameStatus === 'intro' ? (
           <div className="my-auto">
@@ -161,6 +183,11 @@ export default function App() {
               stats={stats}
               quartersSurvived={currentQuarter}
               onRestart={handleRestart}
+              isMultiplayerSession={Boolean(multiplayerContext)}
+              roomCode={multiplayerContext?.roomCode}
+              playerName={multiplayerContext?.playerName}
+              isSessionEndedByHost={isSessionEndedByHost}
+              onLeaveMultiplayer={handleLeaveMultiplayer}
             />
           </div>
         ) : (

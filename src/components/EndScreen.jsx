@@ -1,10 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
-import { RotateCcw, Award, AlertTriangle, BookOpen, Share2, Check, Sparkles, Trophy } from 'lucide-react';
+import { RotateCcw, Award, AlertTriangle, BookOpen, Share2, Check, Sparkles, Trophy, Lock, LogOut } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { getTitleByPerformance } from '../data/endings';
 
-export default function EndScreen({ ending, stats, quartersSurvived, onRestart }) {
+export default function EndScreen({ 
+  ending, 
+  stats, 
+  quartersSurvived, 
+  onRestart,
+  isMultiplayerSession = false,
+  roomCode = '',
+  playerName = '',
+  isSessionEndedByHost = false,
+  onLeaveMultiplayer
+}) {
   const [copied, setCopied] = useState(false);
   const isVictory = ending.badge.includes("Mẫu Mực") || quartersSurvived >= 16;
   const rank = getTitleByPerformance(stats, quartersSurvived);
@@ -24,6 +34,8 @@ export default function EndScreen({ ending, stats, quartersSurvived, onRestart }
 
   const handleCopy = () => {
     const text = `🇻🇳 [GHẾ CÔNG BỘC - TƯ TƯỞNG HỒ CHÍ MINH]\n` +
+      `Thí sinh: ${playerName || 'Cán bộ'}\n` +
+      `Phòng thi: ${roomCode || 'Tự do'}\n` +
       `Kết quả: ${ending.title}\n` +
       `Danh hiệu: ${rank.title} (${rank.tier})\n` +
       `Thời gian tại vị: ${quartersSurvived}/16 Quý\n` +
@@ -109,27 +121,77 @@ export default function EndScreen({ ending, stats, quartersSurvived, onRestart }
         </p>
       </div>
 
-      {/* Bottom Actions: Restart & Copy Score */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={handleCopy}
-          className="py-3 px-4 rounded-xl font-bold text-xs sm:text-sm border border-slate-700 hover:bg-slate-800 text-slate-300 flex items-center justify-center gap-1.5 transition-all"
-        >
-          {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4" />}
-          <span>{copied ? 'Đã sao chép!' : 'Chia sẻ kết quả'}</span>
-        </button>
+      {/* MULTIPLAYER LOCK OR SOLO RESTART */}
+      {isMultiplayerSession ? (
+        <div className="p-4 rounded-2xl bg-slate-950 border border-amber-500/40 text-center space-y-2.5">
+          <div className="flex items-center justify-center gap-2 text-amber-300 font-bold text-xs sm:text-sm">
+            <Lock className="w-4 h-4 text-amber-400" />
+            <span>KẾT QUẢ ĐÃ ĐƯỢC KHÓA TRONG PHÒNG [{roomCode}]</span>
+          </div>
 
-        <button
-          onClick={() => {
-            playSound('select');
-            onRestart();
-          }}
-          className="py-3 px-4 rounded-xl font-black text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 transition-all"
-        >
-          <RotateCcw className="w-4 h-4 stroke-[2.5]" />
-          <span>Bắt đầu nhiệm kỳ mới</span>
-        </button>
-      </div>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            {quartersSurvived < 16 ? (
+              <span>
+                Thí sinh <strong>{playerName}</strong> đã dừng bước tại <strong>Quý {quartersSurvived}/16</strong>. 
+                Để đảm bảo tính công bằng của kỳ thi đấu, <strong>bạn không thể chơi lại</strong>.
+              </span>
+            ) : (
+              <span>
+                Chúc mừng thí sinh <strong>{playerName}</strong> đã hoàn thành xuất sắc 16 Quý nhiệm kỳ!
+              </span>
+            )}
+          </p>
+
+          {!isSessionEndedByHost ? (
+            <div className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-amber-400 font-semibold animate-pulse">
+              ⏳ Vui lòng giữ nguyên màn hình và theo dõi máy chiếu chờ Chủ phòng tổng kết phiên!
+            </div>
+          ) : (
+            <div className="space-y-2 pt-1">
+              <div className="p-2 rounded-xl bg-emerald-950 text-emerald-300 border border-emerald-800 text-xs font-bold">
+                🏁 Phiên thi đấu đã kết thúc! Hãy nhìn lên máy chiếu xem Bục vinh quang!
+              </div>
+              <button
+                onClick={onLeaveMultiplayer}
+                className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Rời phòng (Về chơi tự do)</span>
+              </button>
+            </div>
+          )}
+
+          <button
+            onClick={handleCopy}
+            className="w-full py-2.5 px-4 rounded-xl font-bold text-xs border border-slate-700 hover:bg-slate-800 text-slate-300 flex items-center justify-center gap-1.5 transition-all mt-2"
+          >
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4" />}
+            <span>{copied ? 'Đã sao chép kết quả!' : 'Sao chép kết quả để nộp bài'}</span>
+          </button>
+        </div>
+      ) : (
+        /* SOLO MODE ACTIONS */
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={handleCopy}
+            className="py-3 px-4 rounded-xl font-bold text-xs sm:text-sm border border-slate-700 hover:bg-slate-800 text-slate-300 flex items-center justify-center gap-1.5 transition-all"
+          >
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4" />}
+            <span>{copied ? 'Đã sao chép!' : 'Chia sẻ kết quả'}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              playSound('select');
+              onRestart();
+            }}
+            className="py-3 px-4 rounded-xl font-black text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 transition-all"
+          >
+            <RotateCcw className="w-4 h-4 stroke-[2.5]" />
+            <span>Bắt đầu nhiệm kỳ mới</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
