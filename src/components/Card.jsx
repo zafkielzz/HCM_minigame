@@ -139,7 +139,7 @@ export default function Card({ dilemma, onMakeChoice }) {
         </div>
 
         {/* CENTER: WIDER PHYSICAL EVENT CARD (Expanded width, bright white paper aesthetic) */}
-        <div className="w-full max-w-[390px] sm:max-w-[430px] shrink-0">
+        <div className="w-full max-w-[420px] sm:max-w-[460px] shrink-0">
           <div
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
