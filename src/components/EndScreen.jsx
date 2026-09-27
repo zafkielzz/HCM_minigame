@@ -55,7 +55,7 @@ export default function EndScreen({
           {ending.avatar}
         </div>
 
-        <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-2 ${
+        <span className={`px-3 py-1 rounded-full title-1st text-xs tracking-wider mb-2 ${
           isVictory 
             ? 'bg-amber-100 text-amber-800 border border-amber-300' 
             : 'bg-rose-100 text-rose-800 border border-rose-300'
@@ -63,7 +63,7 @@ export default function EndScreen({
           {ending.badge}
         </span>
 
-        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">
+        <h2 className="title-2nd text-slate-900 tracking-wide leading-tight mt-1">
           {ending.title}
         </h2>
 
@@ -103,7 +103,7 @@ export default function EndScreen({
       </div>
 
       {/* Cause of Ending / Reason */}
-      <div className="mb-4 text-xs sm:text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200">
+      <div className="mb-4 text-xs sm:text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200 font-typewriter">
         <p className="font-medium text-slate-800">{ending.reason}</p>
       </div>
 
@@ -111,12 +111,12 @@ export default function EndScreen({
       <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 mb-5">
         <div className="flex items-center gap-1.5 text-xs font-bold text-red-800 mb-1.5">
           <BookOpen className="w-4 h-4 text-red-600" />
-          <span>Bài học Lý luận Tư tưởng Hồ Chí Minh:</span>
+          <span className="title-1st tracking-wide text-xs">Bài học Lý luận Tư tưởng Hồ Chí Minh:</span>
         </div>
-        <p className="text-xs sm:text-sm text-slate-700 leading-relaxed mb-2">
+        <p className="font-typewriter text-xs sm:text-sm text-slate-700 leading-relaxed mb-2">
           {ending.hcmLesson}
         </p>
-        <p className="font-serif italic text-red-900 text-xs sm:text-sm border-t border-red-200 pt-2">
+        <p className="font-typewriter italic text-red-900 text-xs sm:text-sm border-t border-red-200 pt-2 font-medium">
           {ending.quote}
         </p>
       </div>

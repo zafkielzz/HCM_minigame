@@ -189,18 +189,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen text-slate-800 flex flex-col justify-between p-3 sm:p-5 relative overflow-x-hidden">
-      {/* National Emblem & Dong Son Bronze Drum Watermark Ambient Background */}
-      <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center overflow-hidden opacity-[0.04]">
-        <svg viewBox="0 0 500 500" className="w-[900px] h-[900px] max-w-none text-yellow-300 fill-current">
-          <circle cx="250" cy="250" r="230" stroke="currentColor" strokeWidth="4" fill="none" />
-          <circle cx="250" cy="250" r="185" stroke="currentColor" strokeWidth="2" strokeDasharray="8 6" fill="none" />
-          <circle cx="250" cy="250" r="140" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle cx="250" cy="250" r="85" stroke="currentColor" strokeWidth="2" strokeDasharray="6 4" fill="none" />
-          {/* 14-pointed Star motif */}
-          <polygon points="250,50 262,200 391,109 297,222 446,205 316,250 446,295 297,278 391,391 262,300 250,450 238,300 109,391 203,278 54,295 184,250 54,205 203,222 109,109 238,200" />
-        </svg>
-      </div>
-
       {/* Main Container: Expanded to max-w-7xl for wide spacious 3-column cockpit layout */}
       <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between relative z-10">
         {gameStatus === 'intro' ? (

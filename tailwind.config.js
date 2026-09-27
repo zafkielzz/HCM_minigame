@@ -15,6 +15,8 @@ export default {
         }
       },
       fontFamily: {
+        barber: ['"Barber Fill"', 'Oswald', 'Impact', 'sans-serif'],
+        typewriter: ['"True Typewriter"', '"Courier Prime"', '"Courier New"', 'Courier', 'monospace'],
         serif: ['Merriweather', 'Lora', 'Georgia', 'serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
       }

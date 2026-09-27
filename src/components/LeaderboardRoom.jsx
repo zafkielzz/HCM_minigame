@@ -202,9 +202,9 @@ export default function LeaderboardRoom({
               <Trophy className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+              <h2 className="title-1st text-slate-900 flex items-center gap-2">
                 <span>ĐẤU PHÒNG LỚP HỌC</span>
-                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 font-sans">
                   Thời Gian Thực
                 </span>
               </h2>
@@ -301,7 +301,7 @@ export default function LeaderboardRoom({
                   Mã Phòng Cho Cả Lớp Nhập:
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl sm:text-3xl font-black font-mono text-red-600 tracking-wider">
+                  <span className="title-2nd text-red-600 tracking-wider">
                     {roomCode}
                   </span>
                   <button

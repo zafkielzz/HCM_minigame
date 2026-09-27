@@ -11,19 +11,19 @@ export default function IntroScreen({ onStart, onOpenHandbook, onOpenLeaderboard
           <div className="mx-auto w-16 h-16 rounded-2xl bg-red-600 text-yellow-300 flex items-center justify-center text-3xl font-black shadow-lg shadow-red-200 border-2 border-yellow-400 mb-3">
             ★
           </div>
-          <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-red-100 text-red-800 border border-red-200 inline-block mb-1.5">
-            Môn học Tư tưởng Hồ Chí Minh
+          <span className="title-1st text-red-700 tracking-wider block mb-1">
+            TƯ TƯỞNG HỒ CHÍ MINH
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="title-2nd text-red-600 tracking-wider">
             GHẾ CÔNG BỘC
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
-            Chương 4: Nhà nước của dân, do dân, vì dân & Cải cách hành chính
+          <p className="text-xs sm:text-sm text-slate-600 mt-1 font-semibold">
+            Chương 4: Xây dựng Nhà nước của dân, do dân, vì dân & Cải cách hành chính
           </p>
         </div>
 
         {/* Story Intro */}
-        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-700 leading-relaxed mb-4">
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 font-typewriter text-xs sm:text-sm text-slate-800 leading-relaxed mb-4">
           <p className="mb-2">
             🏛️ <strong>Bối cảnh:</strong> Bạn vừa được nhân dân tín nhiệm bầu vào cương vị người đứng đầu chính quyền địa phương nhiệm kỳ 4 năm (16 Quý).
           </p>

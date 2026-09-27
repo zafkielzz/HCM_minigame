@@ -28,8 +28,8 @@ export default function ConsequenceModal({ result, onContinue }) {
         <div>
           {/* Header Tag */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              {dilemma.quarter} • Kết Quả Xử Lý Sự Vụ
+            <span className="title-1st text-slate-700 text-xs sm:text-sm tracking-wider">
+              {dilemma.quarter} • KẾT QUẢ XỬ LÝ
             </span>
             <span className={`px-2.5 py-1 text-xs font-black uppercase rounded-lg ${
               isLeft ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-blue-100 text-blue-800 border border-blue-300'
@@ -40,7 +40,7 @@ export default function ConsequenceModal({ result, onContinue }) {
 
           {/* Chosen Decision Summary */}
           <div className="my-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-            <p className="text-sm sm:text-base font-semibold text-slate-800">
+            <p className="font-typewriter text-sm sm:text-base font-bold text-slate-800">
               "{choice.text}"
             </p>
           </div>
@@ -79,7 +79,7 @@ export default function ConsequenceModal({ result, onContinue }) {
             <span className="text-xs font-bold text-red-800 flex items-center gap-1.5 mb-1">
               ⭐ Lời Dạy Của Chủ Tịch Hồ Chí Minh:
             </span>
-            <p className="font-serif italic text-sm sm:text-[15px] text-red-950 leading-relaxed">
+            <p className="font-typewriter italic text-sm sm:text-base text-red-950 leading-relaxed">
               {choice.quote}
             </p>
           </div>

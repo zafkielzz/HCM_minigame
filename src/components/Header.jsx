@@ -50,13 +50,13 @@ export default function Header({
             ★
           </div>
           <div>
-            <h1 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-1.5 leading-none drop-shadow">
+            <h1 className="title-1st text-amber-300 flex items-center gap-2 leading-none drop-shadow-md">
               <span>GHẾ CÔNG BỘC</span>
-              <span className="text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-amber-400 text-red-950 shadow-sm">
+              <span className="text-[11px] font-sans font-black px-2 py-0.5 rounded bg-red-600 text-white shadow-sm border border-yellow-400/40">
                 Chương 4
               </span>
             </h1>
-            <p className="text-[11px] text-amber-200/90 font-medium mt-0.5 hidden sm:block">
+            <p className="text-[11px] text-amber-200/90 font-medium mt-1 hidden sm:block">
               Tư tưởng Hồ Chí Minh: Nhà nước của dân, do dân, vì dân
             </p>
           </div>
