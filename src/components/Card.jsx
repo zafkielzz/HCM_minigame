@@ -8,14 +8,12 @@ export default function Card({ dilemma, onMakeChoice }) {
   const startPos = useRef({ x: 0, y: 0 });
   const dragOffsetRef = useRef({ x: 0, y: 0 });
 
-  const SWIPE_THRESHOLD = 80; // Distance to commit a decision
+  const SWIPE_THRESHOLD = 75; // Distance to commit decision
 
-  // Keep ref in sync for window listeners
   useEffect(() => {
     dragOffsetRef.current = dragOffset;
   }, [dragOffset]);
 
-  // Handle drag start
   const handleStart = (clientX, clientY) => {
     setIsDragging(true);
     startPos.current = { x: clientX, y: clientY };
@@ -31,7 +29,6 @@ export default function Card({ dilemma, onMakeChoice }) {
     }
   };
 
-  // Window-level move and end listeners so drag never drops when moving fast
   useEffect(() => {
     const handleMove = (e) => {
       if (!isDragging) return;
@@ -75,35 +72,35 @@ export default function Card({ dilemma, onMakeChoice }) {
 
   // Compute rotation angle
   const rotation = dragOffset.x * 0.06;
-  const isLeft = dragOffset.x < -25;
-  const isRight = dragOffset.x > 25;
+  const isLeft = dragOffset.x < -20;
+  const isRight = dragOffset.x > 20;
 
   return (
     <div className="relative w-full max-w-sm mx-auto flex flex-col items-center select-none">
-      {/* Option Banner (Appears dynamically as user drags left or right - True Reigns style) */}
-      <div className="w-full h-20 flex items-center justify-center px-2 mb-2 text-center">
+      {/* Option Banner: Emerald Green on Left, Sky Blue on Right, with no spoilers */}
+      <div className="w-full h-20 flex items-center justify-center px-1 mb-2">
         {isLeft ? (
-          <div className="w-full bg-slate-900 border border-slate-700 text-slate-100 text-xs sm:text-sm font-semibold py-2.5 px-4 rounded-xl shadow-md transition-all">
-            <span className="text-slate-400 font-bold block text-[10px] uppercase tracking-wider mb-0.5">
+          <div className="w-full bg-emerald-950/90 border-2 border-emerald-500/80 text-emerald-100 text-xs sm:text-sm font-medium py-2.5 px-3.5 rounded-xl shadow-lg text-left transition-all">
+            <span className="text-emerald-400 font-black block text-[11px] uppercase tracking-wider mb-0.5">
               ← Phương án A
             </span>
-            <span>{dilemma.leftChoice.text}</span>
+            <span className="leading-snug">{dilemma.leftChoice.text}</span>
           </div>
         ) : isRight ? (
-          <div className="w-full bg-slate-900 border border-slate-700 text-slate-100 text-xs sm:text-sm font-semibold py-2.5 px-4 rounded-xl shadow-md transition-all">
-            <span className="text-slate-400 font-bold block text-[10px] uppercase tracking-wider mb-0.5">
+          <div className="w-full bg-blue-950/90 border-2 border-blue-500/80 text-blue-100 text-xs sm:text-sm font-medium py-2.5 px-3.5 rounded-xl shadow-lg text-right transition-all">
+            <span className="text-blue-400 font-black block text-[11px] uppercase tracking-wider mb-0.5">
               Phương án B →
             </span>
-            <span>{dilemma.rightChoice.text}</span>
+            <span className="leading-snug">{dilemma.rightChoice.text}</span>
           </div>
         ) : (
-          <div className="text-slate-500 text-xs italic tracking-wide">
-            ← Kéo thẻ sang trái hoặc phải để xem phương án →
+          <div className="text-slate-400 text-xs tracking-wide text-center">
+            ← Kéo sang trái (Phương án A) hoặc sang phải (Phương án B) →
           </div>
         )}
       </div>
 
-      {/* Reigns Central Physical Card */}
+      {/* Reigns Physical Card */}
       <div
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
@@ -113,14 +110,14 @@ export default function Card({ dilemma, onMakeChoice }) {
         }}
         className="w-full cursor-grab active:cursor-grabbing relative select-none rounded-2xl bg-slate-900 border border-slate-700 shadow-xl p-6 overflow-hidden flex flex-col justify-between min-h-[420px]"
       >
-        {/* Neutral Decision Stamp on Card during Swipe */}
-        {dragOffset.x < -35 && (
-          <div className="absolute top-8 right-6 rotate-6 border-2 border-slate-300 text-slate-200 bg-slate-950 font-bold text-xs uppercase px-3 py-1 rounded shadow-md pointer-events-none">
+        {/* Crisp Stamps: Emerald for Left (A), Blue for Right (B) */}
+        {dragOffset.x < -30 && (
+          <div className="absolute top-8 right-6 rotate-6 border-2 border-emerald-400 text-emerald-300 bg-slate-950 font-black text-xs uppercase px-3 py-1.5 rounded-lg shadow-md pointer-events-none">
             PHƯƠNG ÁN A
           </div>
         )}
-        {dragOffset.x > 35 && (
-          <div className="absolute top-8 left-6 -rotate-6 border-2 border-slate-300 text-slate-200 bg-slate-950 font-bold text-xs uppercase px-3 py-1 rounded shadow-md pointer-events-none">
+        {dragOffset.x > 30 && (
+          <div className="absolute top-8 left-6 -rotate-6 border-2 border-blue-400 text-blue-300 bg-slate-950 font-black text-xs uppercase px-3 py-1.5 rounded-lg shadow-md pointer-events-none">
             PHƯƠNG ÁN B
           </div>
         )}

@@ -1,0 +1,531 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Trophy, Users, Play, StopCircle, RefreshCw, X, Check, Copy, 
+  Crown, Medal, Award, AlertCircle, ArrowRight, UserCheck, Flame 
+} from 'lucide-react';
+import confetti from 'canvas-confetti';
+import { MultiplayerSession, generateRoomCode } from '../utils/multiplayer';
+import { playSound } from '../utils/sound';
+
+export default function LeaderboardRoom({ 
+  isOpen, 
+  onClose, 
+  currentQuarter, 
+  stats, 
+  onStartSoloWithSession 
+}) {
+  const [mode, setMode] = useState('select'); // 'select' | 'host' | 'join'
+  const [roomCode, setRoomCode] = useState('');
+  const [playerName, setPlayerName] = useState('');
+  const [playerId] = useState(() => 'p_' + Math.random().toString(36).substring(2, 9));
+  
+  // Host state
+  const [hostPhase, setHostPhase] = useState('lobby'); // 'lobby' | 'live' | 'summary'
+  const [players, setPlayers] = useState({}); // { [playerId]: { name, quarter, stats, status, score, rankTitle } }
+  
+  // Client state
+  const [isJoined, setIsJoined] = useState(false);
+  const [sessionStarted, setSessionStarted] = useState(false);
+
+  const [copiedCode, setCopiedCode] = useState(false);
+  const sessionRef = useRef(null);
+
+  // Clean up session on close
+  useEffect(() => {
+    return () => {
+      if (sessionRef.current) {
+        sessionRef.current.close();
+      }
+    };
+  }, []);
+
+  // Initialize Host Room
+  const handleCreateHost = () => {
+    const code = generateRoomCode();
+    setRoomCode(code);
+    setMode('host');
+    setHostPhase('lobby');
+    setPlayers({});
+
+    const session = new MultiplayerSession(code, true);
+    sessionRef.current = session;
+
+    session.onMessage((data) => {
+      if (data.type === 'PLAYER_JOIN') {
+        setPlayers((prev) => ({
+          ...prev,
+          [data.playerId]: {
+            name: data.name,
+            quarter: 1,
+            stats: { people: 60, law: 60, integrity: 60, reform: 60 },
+            status: 'waiting',
+            score: 60,
+            rankTitle: 'Ứng viên'
+          }
+        }));
+        playSound('select');
+      } else if (data.type === 'PLAYER_PROGRESS') {
+        setPlayers((prev) => ({
+          ...prev,
+          [data.playerId]: {
+            ...(prev[data.playerId] || {}),
+            name: data.name,
+            quarter: data.quarter,
+            stats: data.stats,
+            status: data.status,
+            score: data.score || 60,
+            rankTitle: data.rankTitle || 'Cán bộ'
+          }
+        }));
+      } else if (data.type === 'PLAYER_FINISH') {
+        setPlayers((prev) => ({
+          ...prev,
+          [data.playerId]: {
+            ...(prev[data.playerId] || {}),
+            name: data.name,
+            quarter: data.quartersSurvived,
+            stats: data.stats,
+            status: data.quartersSurvived >= 16 ? 'finished' : 'failed',
+            score: data.score,
+            rankTitle: data.rankTitle
+          }
+        }));
+      }
+    });
+  };
+
+  // Host starts the session
+  const handleHostStart = () => {
+    if (sessionRef.current) {
+      sessionRef.current.broadcast({ type: 'SESSION_START' });
+      setHostPhase('live');
+      playSound('select');
+    }
+  };
+
+  // Host ends and summarizes the session
+  const handleHostEnd = () => {
+    if (sessionRef.current) {
+      sessionRef.current.broadcast({ type: 'SESSION_END' });
+      setHostPhase('summary');
+      playSound('victory');
+      confetti({
+        particleCount: 150,
+        spread: 90,
+        origin: { y: 0.5 }
+      });
+    }
+  };
+
+  // Student joins a room
+  const handleJoinRoom = (e) => {
+    e.preventDefault();
+    if (!playerName.trim() || !roomCode.trim()) return;
+
+    const formattedCode = roomCode.trim().toUpperCase();
+    setRoomCode(formattedCode);
+    setMode('join');
+
+    const session = new MultiplayerSession(formattedCode, false);
+    sessionRef.current = session;
+
+    // Send join message
+    session.broadcast({
+      type: 'PLAYER_JOIN',
+      playerId,
+      name: playerName.trim()
+    });
+
+    setIsJoined(true);
+
+    // Listen for Host signals
+    session.onMessage((data) => {
+      if (data.type === 'SESSION_START') {
+        setSessionStarted(true);
+        playSound('select');
+        // Trigger game start on the student's screen
+        if (onStartSoloWithSession) {
+          onStartSoloWithSession({
+            session,
+            playerId,
+            playerName: playerName.trim(),
+            roomCode: formattedCode
+          });
+        }
+      } else if (data.type === 'SESSION_END') {
+        // Session closed by host
+      }
+    });
+  };
+
+  // Sort players for leaderboard:
+  // Priority: 1. Quarter survived (desc) | 2. Score (desc)
+  const sortedPlayers = Object.entries(players)
+    .map(([id, p]) => ({ id, ...p }))
+    .sort((a, b) => {
+      if (b.quarter !== a.quarter) return b.quarter - a.quarter;
+      return b.score - a.score;
+    });
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(roomCode);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fadeIn overflow-y-auto">
+      <div className="w-full max-w-3xl bg-slate-900 border border-slate-700 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col justify-between my-auto max-h-[92vh]">
+        {/* Top Header */}
+        <div className="flex items-center justify-between pb-3.5 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-black text-slate-100 flex items-center gap-2">
+                <span>ĐẤU PHÒNG LỚP HỌC</span>
+                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  Thời Gian Thực
+                </span>
+              </h2>
+              <p className="text-xs text-slate-400">
+                Thi đua trực tiếp giữa các bạn sinh viên trong lớp học môn Tư tưởng Hồ Chí Minh
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Mode 1: Select Screen */}
+        {mode === 'select' && (
+          <div className="py-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Host Card */}
+            <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 transition-all flex flex-col justify-between group">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-3">
+                  <Crown className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-slate-100 mb-1">
+                  1. Màn Hình Máy Chiếu (Chủ Phòng)
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Dành cho <strong>Nhóm thuyết trình</strong>: Tạo mã phòng, chiếu lên màn hình lớn, chờ cả lớp vào phòng rồi bấm Bắt đầu thi đấu và theo dõi BXH trực tiếp.
+                </p>
+              </div>
+
+              <button
+                onClick={handleCreateHost}
+                className="mt-6 w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+              >
+                <span>Tạo phòng máy chiếu</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Join Card */}
+            <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 hover:border-blue-500/50 transition-all flex flex-col justify-between group">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-3">
+                  <Users className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-slate-100 mb-1">
+                  2. Sinh Viên Tham Gia (Điện thoại)
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Dành cho <strong>các bạn sinh viên dưới lớp</strong>: Nhập họ tên và mã phòng đang chiếu trên bảng để cùng tham gia tranh tài.
+                </p>
+              </div>
+
+              <form onSubmit={handleJoinRoom} className="mt-4 space-y-2.5">
+                <input
+                  type="text"
+                  placeholder="Họ tên (VD: Lan - Nhóm 2)"
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Mã phòng (VD: HCM-88)"
+                  value={roomCode}
+                  onChange={(e) => setRoomCode(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-100 uppercase tracking-widest font-mono focus:outline-none focus:border-blue-500"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  <span>Vào phòng thi đấu</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Mode 2: HOST Screen */}
+        {mode === 'host' && (
+          <div className="py-4 space-y-4 overflow-y-auto">
+            {/* Host Banner & PIN */}
+            <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-2xl bg-slate-950 border border-slate-800 gap-3">
+              <div>
+                <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block mb-0.5">
+                  Mã Phòng Cho Cả Lớp Nhập:
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl sm:text-3xl font-black font-mono text-amber-400 tracking-wider">
+                    {roomCode}
+                  </span>
+                  <button
+                    onClick={handleCopyCode}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition-colors"
+                    title="Sao chép mã phòng"
+                  >
+                    {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons depending on phase */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                {hostPhase === 'lobby' ? (
+                  <button
+                    onClick={handleHostStart}
+                    disabled={sortedPlayers.length === 0}
+                    className="w-full sm:w-auto py-3 px-6 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                  >
+                    <Play className="w-4 h-4 fill-white" />
+                    <span>Bắt Đầu Phiên Thi Đấu ({sortedPlayers.length})</span>
+                  </button>
+                ) : hostPhase === 'live' ? (
+                  <button
+                    onClick={handleHostEnd}
+                    className="w-full sm:w-auto py-3 px-6 bg-red-600 hover:bg-red-500 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                  >
+                    <StopCircle className="w-4 h-4" />
+                    <span>Kết Thúc Phiên & Tổng Kết</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setHostPhase('lobby');
+                      setPlayers({});
+                    }}
+                    className="w-full sm:w-auto py-3 px-5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Mở Lượt Chơi Mới</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Host Phase 1: LOBBY */}
+            {hostPhase === 'lobby' && (
+              <div className="p-5 rounded-2xl bg-slate-950/70 border border-slate-800 text-center">
+                <div className="flex items-center justify-center gap-2 mb-2 text-sm font-bold text-slate-300">
+                  <UserCheck className="w-4 h-4 text-emerald-400" />
+                  <span>Danh sách sinh viên đã vào phòng ({sortedPlayers.length}):</span>
+                </div>
+
+                {sortedPlayers.length === 0 ? (
+                  <p className="text-xs text-slate-500 italic py-6">
+                    Đang đợi các bạn sinh viên quét vào phòng {roomCode}... Hãy chiếu mã phòng lên máy chiếu!
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2 justify-center max-h-56 overflow-y-auto py-2">
+                    {sortedPlayers.map((p, idx) => (
+                      <span
+                        key={p.id}
+                        className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                        <span>{p.name}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Host Phase 2: LIVE LEADERBOARD */}
+            {hostPhase === 'live' && (
+              <div className="rounded-2xl border border-slate-800 overflow-hidden bg-slate-950">
+                <div className="p-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-xs font-bold text-slate-300">
+                  <span>BẢNG XẾP HẠNG THỜI GIAN THỰC</span>
+                  <span className="text-amber-400 flex items-center gap-1">
+                    <Flame className="w-3.5 h-3.5" />
+                    <span>Đang thi đấu...</span>
+                  </span>
+                </div>
+
+                <div className="max-h-72 overflow-y-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-900/50 text-slate-400 border-b border-slate-800">
+                      <tr>
+                        <th className="py-2.5 px-3 w-12 text-center">#</th>
+                        <th className="py-2.5 px-3">Thí Sinh</th>
+                        <th className="py-2.5 px-3 text-center">Tiến Độ</th>
+                        <th className="py-2.5 px-3 text-center">Tình Trạng</th>
+                        <th className="py-2.5 px-3 text-right">Điểm Cân Bằng</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {sortedPlayers.map((p, idx) => (
+                        <tr key={p.id} className="hover:bg-slate-900/40">
+                          <td className="py-2.5 px-3 text-center font-black">
+                            {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                          </td>
+                          <td className="py-2.5 px-3 font-bold text-slate-100">
+                            {p.name}
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-mono text-amber-300">
+                            Quý {p.quarter}/16
+                          </td>
+                          <td className="py-2.5 px-3 text-center">
+                            {p.status === 'finished' ? (
+                              <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 text-[10px] font-bold border border-emerald-800">
+                                🏆 Hoàn thành
+                              </span>
+                            ) : p.status === 'failed' ? (
+                              <span className="px-2 py-0.5 rounded bg-rose-950 text-rose-300 text-[10px] font-bold border border-rose-800">
+                                🛑 Bãi miễn
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-300 text-[10px] font-bold border border-blue-800">
+                                🟢 Đang tại vị
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-black text-slate-200">
+                            {p.score} đ
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Host Phase 3: SUMMARY & PODIUM */}
+            {hostPhase === 'summary' && (
+              <div className="space-y-4">
+                {/* Podium Top 3 */}
+                <div className="grid grid-cols-3 gap-2 text-center py-4 bg-slate-950 rounded-2xl border border-slate-800">
+                  {/* Rank 2 */}
+                  <div className="flex flex-col items-center justify-end p-2">
+                    <span className="text-3xl mb-1">🥈</span>
+                    <span className="text-xs font-bold text-slate-200 truncate max-w-[90px]">
+                      {sortedPlayers[1]?.name || '---'}
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono">
+                      {sortedPlayers[1] ? `Quý ${sortedPlayers[1].quarter} • ${sortedPlayers[1].score}đ` : ''}
+                    </span>
+                    <div className="w-full h-16 bg-slate-800 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-400 text-sm">
+                      #2
+                    </div>
+                  </div>
+
+                  {/* Rank 1 (Crown) */}
+                  <div className="flex flex-col items-center justify-end p-2 -translate-y-2">
+                    <span className="text-4xl mb-1 animate-bounce">👑</span>
+                    <span className="text-sm font-black text-amber-300 truncate max-w-[110px]">
+                      {sortedPlayers[0]?.name || '---'}
+                    </span>
+                    <span className="text-xs text-amber-400/90 font-mono font-bold">
+                      {sortedPlayers[0] ? `Quý ${sortedPlayers[0].quarter} • ${sortedPlayers[0].score}đ` : ''}
+                    </span>
+                    <div className="w-full h-24 bg-gradient-to-t from-amber-600 to-yellow-500 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-950 text-base shadow-lg shadow-amber-500/20">
+                      QUÁN QUÂN
+                    </div>
+                  </div>
+
+                  {/* Rank 3 */}
+                  <div className="flex flex-col items-center justify-end p-2">
+                    <span className="text-3xl mb-1">🥉</span>
+                    <span className="text-xs font-bold text-slate-200 truncate max-w-[90px]">
+                      {sortedPlayers[2]?.name || '---'}
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono">
+                      {sortedPlayers[2] ? `Quý ${sortedPlayers[2].quarter} • ${sortedPlayers[2].score}đ` : ''}
+                    </span>
+                    <div className="w-full h-12 bg-slate-800 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-400 text-sm">
+                      #3
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-300 text-center">
+                  Chúc mừng các bạn sinh viên đã hoàn thành nhiệm kỳ xuất sắc với tinh thần phụng sự công bộc của Chủ tịch Hồ Chí Minh!
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Mode 3: JOIN (Student Phone Screen) */}
+        {mode === 'join' && (
+          <div className="py-8 text-center space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center mx-auto border border-blue-500/30">
+              <Users className="w-8 h-8" />
+            </div>
+
+            <div>
+              <span className="text-xs text-slate-400 block mb-1">
+                Thí sinh: <strong className="text-slate-100">{playerName}</strong>
+              </span>
+              <h3 className="text-xl font-black text-slate-100">
+                ĐÃ VÀO PHÒNG: <span className="font-mono text-amber-400">{roomCode}</span>
+              </h3>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 max-w-sm mx-auto text-xs text-slate-300 leading-relaxed">
+              {sessionStarted ? (
+                <div className="text-emerald-400 font-bold flex items-center justify-center gap-1.5">
+                  <Check className="w-4 h-4" />
+                  <span>Phiên thi đấu đã bắt đầu! Đang tải màn chơi...</span>
+                </div>
+              ) : (
+                <p>
+                  ⏳ Bạn đã điểm danh thành công! Vui lòng nhìn lên màn hình máy chiếu của nhóm thuyết trình và chờ bấm bắt đầu...
+                </p>
+              )}
+            </div>
+
+            {sessionStarted && (
+              <button
+                onClick={onClose}
+                className="py-3 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+              >
+                Vào Bàn Làm Việc (Bắt Đầu Vuốt)
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Modal Footer */}
+        <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span>Kết nối Real-time qua SSE & Mạng phòng học</span>
+          <button
+            onClick={() => setMode('select')}
+            className="text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            Quay lại chọn vai trò
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

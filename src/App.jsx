@@ -7,9 +7,10 @@ import EndScreen from './components/EndScreen';
 import IntroScreen from './components/IntroScreen';
 import HandbookModal from './components/HandbookModal';
 import PresentationMode from './components/PresentationMode';
+import LeaderboardRoom from './components/LeaderboardRoom';
 
 import { DILEMMAS } from './data/dilemmas';
-import { ENDINGS } from './data/endings';
+import { ENDINGS, getTitleByPerformance } from './data/endings';
 
 const INITIAL_STATS = {
   people: 60,
@@ -28,7 +29,11 @@ export default function App() {
   // Modals & settings
   const [isHandbookOpen, setIsHandbookOpen] = useState(false);
   const [isPresentationOpen, setIsPresentationOpen] = useState(false);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+
+  // Multiplayer session context (if joined a room)
+  const [multiplayerContext, setMultiplayerContext] = useState(null); // { session, playerId, playerName, roomCode }
 
   // Restart / Reset
   const handleRestart = () => {
@@ -41,6 +46,13 @@ export default function App() {
 
   // Start game from intro
   const handleStart = () => {
+    handleRestart();
+  };
+
+  // Start game triggered from joined multiplayer room
+  const handleStartSoloWithSession = (sessionData) => {
+    setMultiplayerContext(sessionData);
+    setIsLeaderboardOpen(false);
     handleRestart();
   };
 
@@ -75,6 +87,35 @@ export default function App() {
       triggeredEnding = ENDINGS.AUTHORITARIAN_TRAP;
     } else if (currentQuarter >= DILEMMAS.length) {
       triggeredEnding = ENDINGS.VICTORY;
+    }
+
+    const avgScore = Math.round((newStats.people + newStats.law + newStats.integrity + newStats.reform) / 4);
+    const rankInfo = getTitleByPerformance(newStats, currentQuarter);
+
+    // If connected to multiplayer room, broadcast live progress to Host screen
+    if (multiplayerContext?.session) {
+      if (triggeredEnding) {
+        multiplayerContext.session.broadcast({
+          type: 'PLAYER_FINISH',
+          playerId: multiplayerContext.playerId,
+          name: multiplayerContext.playerName,
+          quartersSurvived: currentQuarter,
+          stats: newStats,
+          score: avgScore,
+          rankTitle: rankInfo.title
+        });
+      } else {
+        multiplayerContext.session.broadcast({
+          type: 'PLAYER_PROGRESS',
+          playerId: multiplayerContext.playerId,
+          name: multiplayerContext.playerName,
+          quarter: currentQuarter + 1,
+          stats: newStats,
+          status: 'playing',
+          score: avgScore,
+          rankTitle: rankInfo.title
+        });
+      }
     }
 
     // Set result to show consequence modal
@@ -112,6 +153,7 @@ export default function App() {
             <IntroScreen 
               onStart={handleStart}
               onOpenHandbook={() => setIsHandbookOpen(true)}
+              onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
             />
           </div>
         ) : gameStatus === 'ended' && activeEnding ? (
@@ -132,6 +174,7 @@ export default function App() {
                 totalQuarters={DILEMMAS.length}
                 onOpenHandbook={() => setIsHandbookOpen(true)}
                 onOpenPresentation={() => setIsPresentationOpen(true)}
+                onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
                 isMuted={isMuted}
                 onToggleMute={() => setIsMuted(!isMuted)}
                 onRestart={handleRestart}
@@ -151,8 +194,14 @@ export default function App() {
             </main>
 
             {/* Bottom Tip for classroom */}
-            <footer className="text-center text-[11px] text-slate-500 py-1">
-              Nhấn <strong className="text-amber-400">"Thuyết trình"</strong> ở trên nếu đang trình chiếu trên màn hình lớp học
+            <footer className="text-center text-[11px] text-slate-500 py-1 flex items-center justify-center gap-2">
+              {multiplayerContext ? (
+                <span className="text-amber-400 font-bold">
+                  ● Đang thi đấu trong phòng [{multiplayerContext.roomCode}] với tư cách: {multiplayerContext.playerName}
+                </span>
+              ) : (
+                <span>Kéo chuột sang trái (Phương án A) hoặc sang phải (Phương án B)</span>
+              )}
             </footer>
           </div>
         )}
@@ -176,6 +225,15 @@ export default function App() {
         onClose={() => setIsPresentationOpen(false)}
         currentDilemma={currentDilemma}
         onMakeChoice={handleMakeChoice}
+      />
+
+      {/* Classroom Leaderboard & Real-time Session Modal */}
+      <LeaderboardRoom
+        isOpen={isLeaderboardOpen}
+        onClose={() => setIsLeaderboardOpen(false)}
+        currentQuarter={currentQuarter}
+        stats={stats}
+        onStartSoloWithSession={handleStartSoloWithSession}
       />
     </div>
   );

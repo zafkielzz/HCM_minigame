@@ -1,8 +1,8 @@
 import React from 'react';
-import { Play, BookOpen, AlertTriangle, Trophy, CheckCircle, Scale, Users, ShieldCheck, Zap } from 'lucide-react';
+import { Play, BookOpen, Trophy, Users, Scale, ShieldCheck, Zap } from 'lucide-react';
 import { playSound } from '../utils/sound';
 
-export default function IntroScreen({ onStart, onOpenHandbook }) {
+export default function IntroScreen({ onStart, onOpenHandbook, onOpenLeaderboard }) {
   return (
     <div className="w-full max-w-lg mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xl animate-fadeIn flex flex-col justify-between">
       <div>
@@ -33,7 +33,7 @@ export default function IntroScreen({ onStart, onOpenHandbook }) {
         </div>
 
         {/* End Game Rules Clarification Box */}
-        <div className="bg-slate-950/90 p-4 rounded-xl border border-amber-500/30 mb-5 text-xs text-slate-300 space-y-2.5">
+        <div className="bg-slate-950/90 p-4 rounded-xl border border-amber-500/30 mb-5 text-xs text-slate-300 space-y-2">
           <div className="flex items-center gap-1.5 font-bold text-amber-300 text-xs uppercase tracking-wide">
             <Trophy className="w-4 h-4 text-amber-400" />
             <span>Quy luật Thắng / Thua (Cơ chế End Game)</span>
@@ -43,23 +43,14 @@ export default function IntroScreen({ onStart, onOpenHandbook }) {
             <div className="flex items-start gap-2">
               <span className="text-emerald-400 font-bold shrink-0">✓ Điều kiện Thắng:</span>
               <span>
-                <strong>Trụ vững qua trọn vẹn 16 Quý (4 năm nhiệm kỳ)</strong> mà không để bất kỳ chỉ số nào rơi về 0. 
-                <em> (Không cần phải đạt 100 điểm tất cả, cốt lõi là giữ vững sự cân bằng, hài hòa giữa các cán cân).</em>
+                <strong>Trụ vững qua trọn vẹn 16 Quý (4 năm nhiệm kỳ)</strong> mà không để bất kỳ chỉ số nào rơi về 0.
               </span>
             </div>
 
             <div className="flex items-start gap-2">
               <span className="text-rose-400 font-bold shrink-0">✕ Điều kiện Thua:</span>
               <span>
-                Bị cách chức hoặc bãi miễn ngay lập tức khi <strong>bất kỳ chỉ số nào chạm mức 0 điểm</strong>, hoặc mắc phải bẫy tư tưởng cực đoan (Bệnh "Mị dân" hay "Quan cách mạng").
-              </span>
-            </div>
-
-            <div className="flex items-start gap-2">
-              <span className="text-blue-400 font-bold shrink-0">ℹ️ Cách chơi:</span>
-              <span>
-                Đọc sự vụ → Chọn Phương án A hoặc B bằng cách bấm nút trực tiếp, dùng phím mũi tên hoặc quẹt thẻ. 
-                <strong> Chỉ số tăng/giảm sẽ được chấm điểm và hiển thị ngay sau khi bạn chốt quyết định!</strong>
+                Bị cách chức hoặc bãi miễn ngay khi <strong>bất kỳ chỉ số nào chạm 0 điểm</strong>, hoặc mắc phải bẫy cực đoan (Bệnh "Mị dân" hay "Quan cách mạng").
               </span>
             </div>
           </div>
@@ -69,19 +60,19 @@ export default function IntroScreen({ onStart, onOpenHandbook }) {
         <div className="grid grid-cols-2 gap-2 text-left mb-5 text-xs">
           <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-2">
             <Users className="w-4 h-4 text-amber-400 shrink-0" />
-            <span className="text-slate-300 font-medium">Lòng Dân (Vì dân)</span>
+            <span className="text-slate-300 font-medium">Lòng Dân</span>
           </div>
           <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-2">
             <Scale className="w-4 h-4 text-purple-400 shrink-0" />
-            <span className="text-slate-300 font-medium">Pháp Quyền (Kỷ cương)</span>
+            <span className="text-slate-300 font-medium">Pháp Quyền</span>
           </div>
           <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span className="text-slate-300 font-medium">Liêm Chính (Chống tham nhũng)</span>
+            <span className="text-slate-300 font-medium">Liêm Chính</span>
           </div>
           <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-2">
             <Zap className="w-4 h-4 text-blue-400 shrink-0" />
-            <span className="text-slate-300 font-medium">Cải Cách (Một cửa, VNeID)</span>
+            <span className="text-slate-300 font-medium">Cải Cách</span>
           </div>
         </div>
       </div>
@@ -96,14 +87,22 @@ export default function IntroScreen({ onStart, onOpenHandbook }) {
           className="w-full py-3.5 px-5 rounded-xl font-bold text-sm uppercase tracking-wide bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md flex items-center justify-center gap-2 transition-colors"
         >
           <Play className="w-4 h-4 fill-slate-950" />
-          <span>Bắt đầu nhậm chức (Vào chơi)</span>
+          <span>Bắt đầu chơi cá nhân</span>
+        </button>
+
+        <button
+          onClick={onOpenLeaderboard}
+          className="w-full py-3 px-4 rounded-xl text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-950/40 hover:bg-amber-950/60 border border-amber-600/50 flex items-center justify-center gap-1.5 transition-colors"
+        >
+          <Trophy className="w-4 h-4 text-amber-400" />
+          <span>🏆 Vào Đấu Phòng Lớp Học (Thi đấu tập thể)</span>
         </button>
 
         <button
           onClick={onOpenHandbook}
-          className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-300 hover:text-amber-300 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 flex items-center justify-center gap-1.5 transition-colors"
+          className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-850 hover:bg-slate-800 border border-slate-800 flex items-center justify-center gap-1.5 transition-colors"
         >
-          <BookOpen className="w-4 h-4 text-amber-400" />
+          <BookOpen className="w-4 h-4" />
           <span>Tra cứu Sổ tay Lý luận Chương 4</span>
         </button>
       </div>
