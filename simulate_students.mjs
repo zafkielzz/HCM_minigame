@@ -1,7 +1,7 @@
 // Classroom Simulator: Simulates 10 realistic students joining, playing, and finishing
 import mqtt from 'mqtt';
 
-const BROKER = 'wss://broker.emqx.io:8084/mqtt';
+const BROKER = 'wss://iot.coreflux.cloud:443/mqtt';
 const ROOM_CODE = process.argv[2] || 'HCM1945';
 
 console.log(`\n======================================================`);

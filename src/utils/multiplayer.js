@@ -10,8 +10,10 @@ export const VALID_ROOM_CODES = new Set(['HCM1945', 'HCM24', 'HCM60', 'HCM88', '
 const STORAGE_KEY_ROOMS = 'hcm_v2_active_rooms';
 const STORAGE_BUS_PREFIX = 'hcm_v2_bus_';
 
-// Public high-speed MQTT brokers with native WebSocket support (accessible in Vietnam & globally)
+// Public high-speed MQTT brokers with native WebSocket support
+// Primary broker uses Port 443 (WSS) to bypass restrictive school/enterprise firewalls (e.g. DH-FPT, Eduroam)
 export const BROKER_SERVERS = [
+  'wss://iot.coreflux.cloud:443/mqtt',
   'wss://broker.emqx.io:8084/mqtt',
   'wss://broker.hivemq.com:8884/mqtt'
 ];
@@ -176,7 +178,7 @@ export async function verifyRoom(roomCode) {
       });
 
       client.on('connect', () => {
-        client.subscribe(`hcm/v2/room/${code}/state`, { qos: 0 });
+        client.subscribe(`hcm/v2/room/${code}/state`, { qos: 1 });
       });
 
       client.on('message', (topic, payload) => {
@@ -360,7 +362,7 @@ export class MultiplayerSession {
         } else {
           // Student listens for Host control signals & room state changes
           this.mqttClient.subscribe(`hcm/v2/room/${this.roomCode}/host`, { qos: 0 });
-          this.mqttClient.subscribe(`hcm/v2/room/${this.roomCode}/state`, { qos: 0 });
+          this.mqttClient.subscribe(`hcm/v2/room/${this.roomCode}/state`, { qos: 1 });
         }
 
         // Flush outbox queue as soon as connected!
@@ -426,7 +428,7 @@ export class MultiplayerSession {
         hostTime: Date.now(),
         ...extraData
       });
-      this.mqttClient.publish(`hcm/v2/room/${this.roomCode}/state`, payload, { retain: true, qos: 0 });
+      this.mqttClient.publish(`hcm/v2/room/${this.roomCode}/state`, payload, { retain: true, qos: 1 });
     } catch (e) {}
   }
 

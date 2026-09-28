@@ -4,7 +4,7 @@
 
 import mqtt from 'mqtt';
 
-const BROKER = 'wss://broker.emqx.io:8084/mqtt';
+const BROKER = 'wss://iot.coreflux.cloud:443/mqtt';
 const ROOM_CODE = process.argv[2] || ('HCMTEST' + Math.floor(1000 + Math.random() * 9000));
 const SESSION_ID = 's_test_' + Date.now();
 
@@ -51,7 +51,7 @@ async function runSuite() {
         sessionId: SESSION_ID,
         status: 'lobby',
         hostTime: Date.now()
-      }), { retain: true, qos: 0 });
+      }), { retain: true, qos: 1 });
       console.log('  -> Host đã kết nối MQTT và tạo phòng trạng thái LOBBY.');
       resolve();
     });
