@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Trophy, Volume2, VolumeX, Home, Maximize, Minimize, UserCheck, Shield } from 'lucide-react';
+import { BookOpen, Trophy, Volume2, VolumeX, Home, Maximize, Minimize, UserCheck, Shield, Clock } from 'lucide-react';
 import { playSound } from '../utils/sound';
+
+function formatDuration(seconds) {
+  if (seconds === undefined || seconds === null || isNaN(seconds) || seconds < 0) return '00:00';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+}
 
 export default function Header({ 
   currentQuarter, 
   totalQuarters, 
+  elapsedSeconds = 0,
   onOpenHandbook, 
   onOpenLeaderboard, 
   isMuted, 
@@ -147,8 +155,17 @@ export default function Header({
             </div>
           )}
 
-          {/* Quarter Timeline */}
+          {/* Quarter Timeline & Live Timer */}
           <div className="flex items-center gap-2 font-bold text-slate-800 shrink-0 ml-auto">
+            {/* Live Timer */}
+            <div 
+              title="Thời gian làm bài"
+              className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-300 font-mono text-xs font-bold shadow-2xs"
+            >
+              <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+              <span>{formatDuration(elapsedSeconds)}</span>
+            </div>
+
             <span className="px-2 py-0.5 rounded bg-red-100 text-red-800 font-black text-xs">
               Năm {year}
             </span>

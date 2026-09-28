@@ -49,6 +49,31 @@ export default function App() {
     }
   });
 
+  // Timer states
+  const [startTime, setStartTime] = useState(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [finalDuration, setFinalDuration] = useState(0);
+
+  // Live Timer counting seconds while playing
+  useEffect(() => {
+    let timerInterval = null;
+    if (gameStatus === 'playing') {
+      const activeStart = startTime || Date.now();
+      if (!startTime) {
+        setStartTime(activeStart);
+      }
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - activeStart) / 1000)));
+      timerInterval = setInterval(() => {
+        setElapsedSeconds(Math.max(0, Math.floor((Date.now() - activeStart) / 1000)));
+      }, 1000);
+    } else {
+      if (timerInterval) clearInterval(timerInterval);
+    }
+    return () => {
+      if (timerInterval) clearInterval(timerInterval);
+    };
+  }, [gameStatus, startTime]);
+
   // Notify host if player closes browser tab during game
   useEffect(() => {
     const handleUnload = () => {
@@ -65,13 +90,17 @@ export default function App() {
   }, [multiplayerContext]);
 
   // Restart / Reset with fresh or seeded dilemmas
-  const handleRestart = (seed = null) => {
+  const handleRestart = (seed = null, explicitStartTime = null) => {
     const activeSeed = seed !== undefined && seed !== null ? seed : (multiplayerContext?.roomCode || null);
     setDilemmas(getShuffledDilemmas(activeSeed));
     setStats(INITIAL_STATS);
     setCurrentQuarter(1);
     setCurrentResult(null);
     setActiveEnding(null);
+    const now = explicitStartTime || Date.now();
+    setStartTime(now);
+    setElapsedSeconds(explicitStartTime ? Math.max(0, Math.floor((Date.now() - explicitStartTime) / 1000)) : 0);
+    setFinalDuration(0);
     setGameStatus('playing');
   };
 
@@ -132,7 +161,7 @@ export default function App() {
       }
     });
 
-    handleRestart(sessionData.roomCode);
+    handleRestart(sessionData.roomCode, sessionData.hostTime || null);
   };
 
   // Leave multiplayer session and return to intro/home
@@ -220,10 +249,13 @@ export default function App() {
 
     const avgScore = Math.round((newStats.people + newStats.law + newStats.integrity + newStats.reform) / 4);
     const rankInfo = getTitleByPerformance(newStats, currentQuarter);
+    const currentTime = Date.now();
+    const duration = Math.max(1, Math.round((currentTime - (startTime || currentTime)) / 1000));
 
     // If connected to multiplayer room, broadcast live progress to Host screen
     if (multiplayerContext?.session) {
       if (triggeredEnding) {
+        setFinalDuration(duration);
         const isVictory = triggeredEnding === ENDINGS.VICTORY;
         multiplayerContext.session.broadcast({
           type: 'PLAYER_FINISH',
@@ -235,7 +267,9 @@ export default function App() {
           rankTitle: rankInfo.title,
           isVictory,
           status: isVictory ? 'finished' : 'failed',
-          failedAtQuarter: isVictory ? null : currentQuarter
+          failedAtQuarter: isVictory ? null : currentQuarter,
+          duration,
+          finishTime: currentTime
         });
       } else {
         multiplayerContext.session.broadcast({
@@ -246,9 +280,12 @@ export default function App() {
           stats: newStats,
           status: 'playing',
           score: avgScore,
-          rankTitle: rankInfo.title
+          rankTitle: rankInfo.title,
+          duration
         });
       }
+    } else if (triggeredEnding) {
+      setFinalDuration(duration);
     }
 
     // Set result to show consequence modal
@@ -295,6 +332,7 @@ export default function App() {
               ending={activeEnding}
               stats={stats}
               quartersSurvived={currentQuarter}
+              duration={finalDuration || elapsedSeconds}
               onRestart={handleRestart}
               isMultiplayerSession={Boolean(multiplayerContext)}
               roomCode={multiplayerContext?.roomCode}
@@ -311,6 +349,7 @@ export default function App() {
               <Header
                 currentQuarter={currentQuarter}
                 totalQuarters={dilemmas.length}
+                elapsedSeconds={elapsedSeconds}
                 onOpenHandbook={() => setIsHandbookOpen(true)}
                 onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
                 isMuted={isMuted}

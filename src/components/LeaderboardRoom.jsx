@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { 
   Trophy, Users, Play, StopCircle, RefreshCw, X, Check, Copy, 
   Crown, AlertCircle, ArrowRight, ArrowLeft, UserCheck, Flame, ClipboardList,
-  Eye, EyeOff, Lock, LogOut, Trash2
+  Eye, EyeOff, Lock, LogOut, Trash2, Clock
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { 
@@ -15,6 +15,38 @@ import {
   unregisterHostRoom 
 } from '../utils/multiplayer';
 import { playSound } from '../utils/sound';
+
+export function formatDuration(seconds) {
+  if (seconds === undefined || seconds === null || isNaN(seconds) || seconds <= 0) return '--:--';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+export function sortPlayersByPerformance(a, b) {
+  const aFinished = a.status === 'finished' || a.quarter >= 16;
+  const bFinished = b.status === 'finished' || b.quarter >= 16;
+  
+  if (aFinished && !bFinished) return -1;
+  if (bFinished && !aFinished) return 1;
+
+  // Nếu cùng hoàn thành 16 kỳ: Ai hoàn thành trước (duration ít hơn) thì xếp trên!
+  if (aFinished && bFinished) {
+    const aTime = a.duration || (a.finishTime ? Math.round(a.finishTime / 1000) : 999999);
+    const bTime = b.duration || (b.finishTime ? Math.round(b.finishTime / 1000) : 999999);
+    if (aTime !== bTime) {
+      return aTime - bTime;
+    }
+    if ((b.score || 0) !== (a.score || 0)) {
+      return (b.score || 0) - (a.score || 0);
+    }
+    return (a.name || '').localeCompare(b.name || '', 'vi');
+  }
+
+  if (b.quarter !== a.quarter) return b.quarter - a.quarter;
+  if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+  return (a.name || '').localeCompare(b.name || '', 'vi');
+}
 
 export default function LeaderboardRoom({ 
   isOpen, 
@@ -379,7 +411,8 @@ export default function LeaderboardRoom({
             stats: data.stats,
             status: data.status,
             score: data.score || 60,
-            rankTitle: data.rankTitle || 'Cán bộ'
+            rankTitle: data.rankTitle || 'Cán bộ',
+            duration: data.duration
           };
           playersRef.current = next;
           return next;
@@ -404,7 +437,9 @@ export default function LeaderboardRoom({
             stats: data.stats,
             status: isVictory ? 'finished' : 'failed',
             score: data.score,
-            rankTitle: data.rankTitle
+            rankTitle: data.rankTitle,
+            duration: data.duration,
+            finishTime: data.finishTime || Date.now()
           };
           playersRef.current = next;
           return next;
@@ -434,12 +469,7 @@ export default function LeaderboardRoom({
       sessionRef.current.setStatus('summary');
       const sorted = Object.entries(players)
         .map(([id, p]) => ({ id, ...p }))
-        .sort((a, b) => {
-          if (a.status === 'finished' && b.status !== 'finished') return -1;
-          if (b.status === 'finished' && a.status !== 'finished') return 1;
-          if (b.quarter !== a.quarter) return b.quarter - a.quarter;
-          return (b.score || 0) - (a.score || 0);
-        });
+        .sort(sortPlayersByPerformance);
 
       const playersList = sorted.map((p, idx) => ({
         id: p.id,
@@ -448,6 +478,7 @@ export default function LeaderboardRoom({
         score: p.score,
         status: p.status,
         rankTitle: p.rankTitle || 'Cán bộ',
+        duration: p.duration,
         rank: idx + 1
       }));
 
@@ -602,11 +633,7 @@ export default function LeaderboardRoom({
       if (hostPhase === 'lobby') {
         return (a.name || '').localeCompare(b.name || '', 'vi');
       }
-      if (a.status === 'finished' && b.status !== 'finished') return -1;
-      if (b.status === 'finished' && a.status !== 'finished') return 1;
-      if (b.quarter !== a.quarter) return b.quarter - a.quarter;
-      if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
-      return (a.name || '').localeCompare(b.name || '', 'vi');
+      return sortPlayersByPerformance(a, b);
     });
 
   // Explicit sortedPlayers reference ensures host lobby & live table NEVER crash
@@ -621,13 +648,7 @@ export default function LeaderboardRoom({
       : hostPlayersList;
 
   const effectivePlayersList = (syncedPlayersList && syncedPlayersList.length > 0) || (externalPlayersList && externalPlayersList.length > 0)
-    ? [...rawList].sort((a, b) => {
-        if (a.status === 'finished' && b.status !== 'finished') return -1;
-        if (b.status === 'finished' && a.status !== 'finished') return 1;
-        if (b.quarter !== a.quarter) return b.quarter - a.quarter;
-        if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
-        return (a.name || '').localeCompare(b.name || '', 'vi');
-      })
+    ? [...rawList].sort(sortPlayersByPerformance)
     : hostPlayersList;
 
   const handleCopyCode = () => {
@@ -648,7 +669,10 @@ export default function LeaderboardRoom({
       const statusText = p.status === 'finished' || p.quarter >= 16 
         ? 'Hoàn thành 16 Quý' 
         : `Bãi miễn tại Quý ${p.quarter}/16`;
-      report += `${medal} ${p.name} | ${statusText} | Điểm: ${p.score}đ | Danh hiệu: ${p.rankTitle || 'Cán bộ'}\n`;
+      const timeText = (p.duration !== undefined && p.duration !== null && p.duration > 0)
+        ? ` | ⏱️ ${formatDuration(p.duration)}`
+        : '';
+      report += `${medal} ${p.name} | ${statusText}${timeText} | Điểm: ${p.score}đ | Danh hiệu: ${p.rankTitle || 'Cán bộ'}\n`;
     });
 
     navigator.clipboard.writeText(report);
@@ -783,7 +807,7 @@ export default function LeaderboardRoom({
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 font-bold uppercase">Bạn</span>
                     </div>
                     <div className="text-slate-600 text-xs mt-0.5">
-                      Hạng <strong>#{myRankInfo.calculatedRank}</strong> / {effectivePlayersList.length} thí sinh • Quý <strong>{myRankInfo.quarter}/16</strong> • Danh hiệu: <strong className="text-amber-700">{myRankInfo.rankTitle || 'Cán bộ'}</strong>
+                      Hạng <strong>#{myRankInfo.calculatedRank}</strong> / {effectivePlayersList.length} thí sinh • Quý <strong>{myRankInfo.quarter}/16</strong>{myRankInfo.duration ? ` • ⏱️ ${formatDuration(myRankInfo.duration)}` : ''} • Danh hiệu: <strong className="text-amber-700">{myRankInfo.rankTitle || 'Cán bộ'}</strong>
                     </div>
                   </div>
                 </div>
@@ -803,7 +827,7 @@ export default function LeaderboardRoom({
                   {effectivePlayersList[1]?.name || '---'}
                 </span>
                 <span className="text-[11px] text-slate-500 font-mono">
-                  {effectivePlayersList[1] ? `Quý ${effectivePlayersList[1].quarter}/16 • ${effectivePlayersList[1].score}đ` : ''}
+                  {effectivePlayersList[1] ? `Quý ${effectivePlayersList[1].quarter}/16 • ${effectivePlayersList[1].score}đ${effectivePlayersList[1].duration ? ` • ${formatDuration(effectivePlayersList[1].duration)}` : ''}` : ''}
                 </span>
                 <div className="w-full h-16 bg-slate-200 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-700 text-sm">
                   #2
@@ -817,7 +841,7 @@ export default function LeaderboardRoom({
                   {effectivePlayersList[0]?.name || '---'}
                 </span>
                 <span className="text-xs text-amber-700 font-mono font-bold">
-                  {effectivePlayersList[0] ? `Quý ${effectivePlayersList[0].quarter}/16 • ${effectivePlayersList[0].score}đ` : ''}
+                  {effectivePlayersList[0] ? `Quý ${effectivePlayersList[0].quarter}/16 • ${effectivePlayersList[0].score}đ${effectivePlayersList[0].duration ? ` • ${formatDuration(effectivePlayersList[0].duration)}` : ''}` : ''}
                 </span>
                 <div className="w-full h-24 bg-gradient-to-t from-amber-500 to-yellow-400 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-950 text-base shadow-lg shadow-amber-500/20">
                   QUÁN QUÂN
@@ -831,7 +855,7 @@ export default function LeaderboardRoom({
                   {effectivePlayersList[2]?.name || '---'}
                 </span>
                 <span className="text-[11px] text-slate-500 font-mono">
-                  {effectivePlayersList[2] ? `Quý ${effectivePlayersList[2].quarter}/16 • ${effectivePlayersList[2].score}đ` : ''}
+                  {effectivePlayersList[2] ? `Quý ${effectivePlayersList[2].quarter}/16 • ${effectivePlayersList[2].score}đ${effectivePlayersList[2].duration ? ` • ${formatDuration(effectivePlayersList[2].duration)}` : ''}` : ''}
                 </span>
                 <div className="w-full h-12 bg-slate-200 rounded-t-xl mt-2 flex items-center justify-center font-black text-slate-700 text-sm">
                   #3
@@ -860,6 +884,7 @@ export default function LeaderboardRoom({
                       <th className="py-2.5 px-3 w-12 text-center">Hạng</th>
                       <th className="py-2.5 px-3">Nickname</th>
                       <th className="py-2.5 px-3 text-center">Số Kỳ Đã Trải Qua</th>
+                      <th className="py-2.5 px-3 text-center">⏱️ Thời Gian</th>
                       <th className="py-2.5 px-3 text-center">Kết Quả Nhiệm Kỳ</th>
                       <th className="py-2.5 px-3 text-right">Điểm Số</th>
                       <th className="py-2.5 px-3 text-left hidden sm:table-cell">Danh Hiệu</th>
@@ -886,6 +911,9 @@ export default function LeaderboardRoom({
                           </td>
                           <td className="py-2.5 px-3 text-center font-mono font-bold text-amber-700">
                             {p.quarter} / 16 Quý
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-700">
+                            {formatDuration(p.duration)}
                           </td>
                           <td className="py-2.5 px-3 text-center">
                             {p.status === 'finished' ? (
@@ -1200,6 +1228,7 @@ export default function LeaderboardRoom({
                         <th className="py-2.5 px-3 w-12 text-center">#</th>
                         <th className="py-2.5 px-3">Nickname</th>
                         <th className="py-2.5 px-3 text-center">Số Kỳ Đã Qua</th>
+                        <th className="py-2.5 px-3 text-center">⏱️ Thời Gian</th>
                         <th className="py-2.5 px-3 text-center">Tình Trạng</th>
                         <th className="py-2.5 px-3 text-right">Điểm Cân Bằng</th>
                       </tr>
@@ -1215,6 +1244,9 @@ export default function LeaderboardRoom({
                           </td>
                           <td className="py-2.5 px-3 text-center font-mono text-amber-700 font-bold">
                             Quý {p.quarter}/16
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-700">
+                            {formatDuration(p.duration)}
                           </td>
                           <td className="py-2.5 px-3 text-center">
                             {p.status === 'finished' ? (

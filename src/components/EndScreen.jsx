@@ -4,10 +4,18 @@ import { RotateCcw, Award, AlertTriangle, BookOpen, Share2, Check, Sparkles, Tro
 import { playSound } from '../utils/sound';
 import { getTitleByPerformance } from '../data/endings';
 
+function formatDuration(seconds) {
+  if (seconds === undefined || seconds === null || isNaN(seconds) || seconds <= 0) return '--:--';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
 export default function EndScreen({ 
   ending, 
   stats, 
   quartersSurvived, 
+  duration = 0,
   onRestart,
   isMultiplayerSession = false,
   roomCode = '',
@@ -34,12 +42,13 @@ export default function EndScreen({
   }, [isVictory]);
 
   const handleCopy = () => {
+    const timeText = duration > 0 ? ` (⏱️ ${formatDuration(duration)})` : '';
     const text = `🇻🇳 [GHẾ CÔNG BỘC - TƯ TƯỞNG HỒ CHÍ MINH]\n` +
       `Thí sinh: ${playerName || 'Cán bộ'}\n` +
       `Phòng thi: ${roomCode || 'Tự do'}\n` +
       `Kết quả: ${ending.title}\n` +
       `Danh hiệu: ${rank.title} (${rank.tier})\n` +
-      `Thời gian tại vị: ${quartersSurvived}/16 Quý\n` +
+      `Thời gian tại vị: ${quartersSurvived}/16 Quý${timeText}\n` +
       `Chỉ số cuối cùng: Lòng Dân: ${stats.people} | Pháp Quyền: ${stats.law} | Liêm Chính: ${stats.integrity} | Cải Cách: ${stats.reform}\n` +
       `Trích dẫn bài học: "${ending.quote}"`;
 
@@ -80,7 +89,14 @@ export default function EndScreen({
       <div className="my-5 p-4 rounded-2xl bg-slate-50 border border-slate-200">
         <div className="flex items-center justify-between text-xs text-slate-500 pb-2 mb-3 border-b border-slate-200">
           <span>Thời gian phụng sự:</span>
-          <span className="font-extrabold text-amber-700 text-sm">{quartersSurvived} / 16 Quý ({Math.floor(quartersSurvived / 4)} năm {quartersSurvived % 4} quý)</span>
+          <div className="flex items-center gap-1.5">
+            {duration > 0 && (
+              <span className="font-mono text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold">
+                ⏱️ {formatDuration(duration)}
+              </span>
+            )}
+            <span className="font-extrabold text-amber-700 text-sm">{quartersSurvived} / 16 Quý</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2.5 text-xs">
