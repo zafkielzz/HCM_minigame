@@ -154,14 +154,13 @@ export default function Card({ dilemma, onMakeChoice }) {
         
         {/* LEFT PANEL: PHƯƠNG ÁN A */}
         <div 
-          className={`hidden md:flex flex-1 flex-col justify-between p-7 lg:p-8 xl:p-9 rounded-3xl border-2 transition-all duration-150 min-h-[480px] sm:min-h-[520px] text-left select-none pointer-events-none ${
+          className={`hidden md:flex flex-1 flex-col justify-between p-7 lg:p-8 xl:p-9 rounded-3xl border-2 transition-colors duration-150 min-h-[480px] sm:min-h-[520px] text-left select-none pointer-events-none ${
             isLeft 
               ? isCommitReadyLeft
-                ? 'bg-emerald-100 border-emerald-600 text-emerald-950 scale-[1.03] shadow-2xl ring-4 ring-emerald-500/40 opacity-100 translate-x-2'
-                : 'bg-emerald-50 border-emerald-500 text-emerald-950 scale-[1.01] shadow-xl ring-2 ring-emerald-400/30 opacity-95 translate-x-1'
+                ? 'bg-emerald-100 border-emerald-600 text-emerald-950 shadow-xl ring-2 ring-emerald-500/50 opacity-100'
+                : 'bg-emerald-50 border-emerald-500 text-emerald-950 shadow-lg ring-1 ring-emerald-400/30 opacity-95'
               : 'bg-white/95 border-slate-200 text-slate-700 opacity-70 shadow-md'
           }`}
-          style={{ willChange: 'transform, opacity' }}
         >
           <div>
             <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-slate-200">
@@ -273,14 +272,13 @@ export default function Card({ dilemma, onMakeChoice }) {
 
         {/* RIGHT PANEL: PHƯƠNG ÁN B */}
         <div 
-          className={`hidden md:flex flex-1 flex-col justify-between p-7 lg:p-8 xl:p-9 rounded-3xl border-2 transition-all duration-150 min-h-[480px] sm:min-h-[520px] text-right select-none pointer-events-none ${
+          className={`hidden md:flex flex-1 flex-col justify-between p-7 lg:p-8 xl:p-9 rounded-3xl border-2 transition-colors duration-150 min-h-[480px] sm:min-h-[520px] text-right select-none pointer-events-none ${
             isRight 
               ? isCommitReadyRight
-                ? 'bg-blue-100 border-blue-600 text-blue-950 scale-[1.03] shadow-2xl ring-4 ring-blue-500/40 opacity-100 -translate-x-2'
-                : 'bg-blue-50 border-blue-500 text-blue-950 scale-[1.01] shadow-xl ring-2 ring-blue-400/30 opacity-95 -translate-x-1'
+                ? 'bg-blue-100 border-blue-600 text-blue-950 shadow-xl ring-2 ring-blue-500/50 opacity-100'
+                : 'bg-blue-50 border-blue-500 text-blue-950 shadow-lg ring-1 ring-blue-400/30 opacity-95'
               : 'bg-white/95 border-slate-200 text-slate-700 opacity-70 shadow-md'
           }`}
-          style={{ willChange: 'transform, opacity' }}
         >
           <div>
             <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-slate-200">

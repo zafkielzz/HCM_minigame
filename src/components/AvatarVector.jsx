@@ -3,7 +3,7 @@ import React from 'react';
 // Bộ sưu tập Avatar phong cách Minimalist Vector / Silhouette (Phong cách chuẩn của game Reigns)
 // Tối giản, hình khối sắc nét, kết hợp nhận diện công chức, nhân dân, doanh nghiệp Việt Nam
 
-export default function AvatarVector({ id, size = "w-20 h-20", className = "" }) {
+const AvatarVector = React.memo(function AvatarVector({ id, size = "w-20 h-20", className = "" }) {
   const getAvatarSvg = () => {
     switch (id) {
       // 1. Bác Ba Nông Dân (Nón lá, áo nâu chân chất, râu tóc bạc phơ)
@@ -284,4 +284,6 @@ export default function AvatarVector({ id, size = "w-20 h-20", className = "" })
       {getAvatarSvg()}
     </div>
   );
-}
+});
+
+export default AvatarVector;
