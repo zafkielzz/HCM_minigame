@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { 
   Trophy, Users, Play, StopCircle, RefreshCw, X, Check, Copy, 
   Crown, AlertCircle, ArrowRight, ArrowLeft, UserCheck, Flame, ClipboardList,
@@ -75,6 +75,32 @@ export default function LeaderboardRoom({
   const sessionRef = useRef(null);
   const sessionStartHandledRef = useRef(false);
   const playersRef = useRef({});
+
+  // Scroll position retention across live re-renders
+  const liveTableRef = useRef(null);
+  const liveTableScrollPos = useRef(0);
+  const summaryTableRef = useRef(null);
+  const summaryTableScrollPos = useRef(0);
+  const hostBodyRef = useRef(null);
+  const hostBodyScrollPos = useRef(0);
+  const summaryBodyRef = useRef(null);
+  const summaryBodyScrollPos = useRef(0);
+
+  // Restore scroll positions after re-render so live score updates don't snap the list back to top
+  useLayoutEffect(() => {
+    if (liveTableRef.current && liveTableScrollPos.current > 0) {
+      liveTableRef.current.scrollTop = liveTableScrollPos.current;
+    }
+    if (summaryTableRef.current && summaryTableScrollPos.current > 0) {
+      summaryTableRef.current.scrollTop = summaryTableScrollPos.current;
+    }
+    if (hostBodyRef.current && hostBodyScrollPos.current > 0) {
+      hostBodyRef.current.scrollTop = hostBodyScrollPos.current;
+    }
+    if (summaryBodyRef.current && summaryBodyScrollPos.current > 0) {
+      summaryBodyRef.current.scrollTop = summaryBodyScrollPos.current;
+    }
+  });
 
   // Reset all session and room state back to select screen
   const resetToSelectMode = () => {
@@ -673,29 +699,36 @@ export default function LeaderboardRoom({
 
         {/* VIEW 1: SUMMARY / SYNCHRONIZED LEADERBOARD (Available for both Host and Student) */}
         {isSummaryView ? (
-          <div className="py-4 space-y-4 overflow-y-auto">
+          <div 
+            ref={summaryBodyRef}
+            onScroll={(e) => { summaryBodyScrollPos.current = e.currentTarget.scrollTop; }}
+            style={{ overflowAnchor: 'none' }}
+            className="py-4 space-y-4 overflow-y-auto"
+          >
             {/* Summary Top Banner */}
-            <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200 gap-3">
-              <div>
-                <span className="text-[11px] uppercase tracking-wider text-slate-500 font-bold block mb-0.5">
-                  Phòng thi đấu:
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="title-2nd text-red-600 tracking-wider">
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-50 to-slate-100/80 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
+              {/* Left: Room PIN & Status */}
+              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5">
+                <div>
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-500 font-bold block">
+                    Phòng thi đấu:
+                  </span>
+                  <span className="title-2nd text-red-600 tracking-wider text-xl sm:text-2xl font-black">
                     {roomCode || multiplayerContext?.roomCode || DEFAULT_HOST_ROOM_CODE}
                   </span>
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-300 text-blue-800 text-[11px] font-bold">
-                    <span>🏁 PHIÊN ĐÃ KẾT THÚC</span>
-                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold whitespace-nowrap shadow-2xs">
+                  <span>🏁 Phiên đã kết thúc</span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              {/* Right: Actions Bar */}
+              <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-start md:justify-end">
                 <button
                   onClick={handleCopyRankingReport}
-                  className="py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-slate-300 shadow-sm w-full sm:w-auto"
+                  className="py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 active:scale-95 text-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-slate-300 shadow-xs whitespace-nowrap shrink-0 hover:border-slate-400"
                 >
-                  {copiedRankingReport ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  {copiedRankingReport ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-500" />}
                   <span>{copiedRankingReport ? 'Đã sao chép!' : 'Sao chép bảng điểm'}</span>
                 </button>
 
@@ -709,14 +742,14 @@ export default function LeaderboardRoom({
                           sessionRef.current.resetSession();
                         }
                       }}
-                      className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-md w-full sm:w-auto shrink-0"
+                      className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm whitespace-nowrap shrink-0"
                     >
                       <RefreshCw className="w-4 h-4" />
                       <span>Mở Lượt Chơi Mới</span>
                     </button>
                     <button
                       onClick={handleHostCloseRoom}
-                      className="py-2.5 px-3.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs w-full sm:w-auto shrink-0"
+                      className="py-2.5 px-3.5 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-2xs whitespace-nowrap shrink-0"
                       title="Đóng và xoá phòng thi đấu"
                     >
                       <Trash2 className="w-4 h-4 text-rose-600" />
@@ -805,7 +838,12 @@ export default function LeaderboardRoom({
                 </div>
               </div>
 
-              <div className="max-h-64 sm:max-h-72 overflow-y-auto">
+              <div 
+                ref={summaryTableRef}
+                onScroll={(e) => { summaryTableScrollPos.current = e.currentTarget.scrollTop; }}
+                style={{ overflowAnchor: 'none' }}
+                className="max-h-80 sm:max-h-96 overflow-y-auto"
+              >
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 sticky top-0 backdrop-blur-sm">
                     <tr>
@@ -1030,20 +1068,25 @@ export default function LeaderboardRoom({
           </div>
         ) : mode === 'host' ? (
           /* Mode 2: HOST Screen (Lobby & Live) */
-          <div className="py-4 space-y-4 overflow-y-auto">
+          <div 
+            ref={hostBodyRef}
+            onScroll={(e) => { hostBodyScrollPos.current = e.currentTarget.scrollTop; }}
+            style={{ overflowAnchor: 'none' }}
+            className="py-4 space-y-4 overflow-y-auto"
+          >
             {/* Host Banner & PIN */}
-            <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200 gap-3">
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-50 to-slate-100/80 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
               <div>
-                <span className="text-[11px] uppercase tracking-wider text-slate-500 font-bold block mb-0.5">
+                <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-500 font-bold block mb-0.5">
                   Mã phòng:
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="title-2nd text-red-600 tracking-wider">
+                  <span className="title-2nd text-red-600 tracking-wider text-xl sm:text-2xl font-black">
                     {roomCode}
                   </span>
                   <button
                     onClick={handleCopyCode}
-                    className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs transition-colors shadow-sm"
+                    className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 active:scale-95 text-slate-700 text-xs transition-colors shadow-2xs"
                     title="Sao chép mã phòng"
                   >
                     {copiedCode ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
@@ -1052,12 +1095,12 @@ export default function LeaderboardRoom({
 
                 {/* Visual Room Lifecycle Badge */}
                 {hostPhase === 'lobby' ? (
-                  <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 text-[11px] font-bold w-fit shadow-xs">
+                  <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 text-[11px] font-bold w-fit shadow-2xs whitespace-nowrap">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span>🟢 ĐANG MỞ NHẬN NGƯỜI CHƠI</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300 text-amber-800 text-[11px] font-bold w-fit shadow-xs">
+                  <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300 text-amber-800 text-[11px] font-bold w-fit shadow-2xs whitespace-nowrap">
                     <span className="w-2 h-2 rounded-full bg-amber-500" />
                     <span>🔒 ĐÃ KHOÁ PHÒNG (ĐANG THI ĐẤU)</span>
                   </div>
@@ -1065,12 +1108,12 @@ export default function LeaderboardRoom({
               </div>
 
               {/* Action Buttons depending on phase */}
-              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-start md:justify-end">
                 {hostPhase === 'lobby' ? (
                   <button
                     onClick={handleHostStart}
                     disabled={sortedPlayers.length === 0}
-                    className="flex-1 sm:flex-initial py-3 px-6 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                    className="py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
                   >
                     <Play className="w-4 h-4 fill-white" />
                     <span>Bắt Đầu Phiên Thi Đấu ({sortedPlayers.length})</span>
@@ -1078,7 +1121,7 @@ export default function LeaderboardRoom({
                 ) : (
                   <button
                     onClick={handleHostEnd}
-                    className="flex-1 sm:flex-initial py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                    className="py-2.5 px-5 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
                   >
                     <StopCircle className="w-4 h-4" />
                     <span>Kết Thúc Phiên & Tổng Kết</span>
@@ -1087,11 +1130,11 @@ export default function LeaderboardRoom({
 
                 <button
                   onClick={handleHostCloseRoom}
-                  className="py-3 px-3.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
+                  className="py-2.5 px-3.5 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-2xs whitespace-nowrap shrink-0"
                   title="Đóng và xoá phòng thi đấu"
                 >
                   <Trash2 className="w-4 h-4 text-rose-600" />
-                  <span className="hidden sm:inline">Đóng Phòng</span>
+                  <span>Đóng Phòng</span>
                 </button>
               </div>
             </div>
@@ -1135,7 +1178,12 @@ export default function LeaderboardRoom({
                   </span>
                 </div>
 
-                <div className="max-h-72 overflow-y-auto">
+                <div 
+                  ref={liveTableRef}
+                  onScroll={(e) => { liveTableScrollPos.current = e.currentTarget.scrollTop; }}
+                  style={{ overflowAnchor: 'none' }}
+                  className="max-h-80 sm:max-h-96 overflow-y-auto"
+                >
                   <table className="w-full text-left text-xs">
                     <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                       <tr>
