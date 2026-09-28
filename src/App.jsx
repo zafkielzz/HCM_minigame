@@ -210,14 +210,18 @@ export default function App() {
     // If connected to multiplayer room, broadcast live progress to Host screen
     if (multiplayerContext?.session) {
       if (triggeredEnding) {
+        const isVictory = triggeredEnding === ENDINGS.VICTORY;
         multiplayerContext.session.broadcast({
           type: 'PLAYER_FINISH',
           playerId: multiplayerContext.playerId,
           name: multiplayerContext.playerName,
-          quartersSurvived: currentQuarter,
+          quartersSurvived: isVictory ? 16 : Math.max(0, currentQuarter - 1),
           stats: newStats,
           score: avgScore,
-          rankTitle: rankInfo.title
+          rankTitle: rankInfo.title,
+          isVictory,
+          status: isVictory ? 'finished' : 'failed',
+          failedAtQuarter: isVictory ? null : currentQuarter
         });
       } else {
         multiplayerContext.session.broadcast({

@@ -393,12 +393,16 @@ export default function LeaderboardRoom({
               delete next[id];
             }
           }
+          const isVictory = data.isVictory !== undefined 
+            ? data.isVictory 
+            : (data.status === 'finished' || data.quartersSurvived >= 16);
           next[data.playerId] = {
             ...(prev[data.playerId] || {}),
             name: data.name,
             quarter: data.quartersSurvived,
+            failedAtQuarter: data.failedAtQuarter,
             stats: data.stats,
-            status: data.quartersSurvived >= 16 ? 'finished' : 'failed',
+            status: isVictory ? 'finished' : 'failed',
             score: data.score,
             rankTitle: data.rankTitle
           };
@@ -431,6 +435,8 @@ export default function LeaderboardRoom({
       const sorted = Object.entries(players)
         .map(([id, p]) => ({ id, ...p }))
         .sort((a, b) => {
+          if (a.status === 'finished' && b.status !== 'finished') return -1;
+          if (b.status === 'finished' && a.status !== 'finished') return 1;
           if (b.quarter !== a.quarter) return b.quarter - a.quarter;
           return (b.score || 0) - (a.score || 0);
         });
@@ -596,6 +602,8 @@ export default function LeaderboardRoom({
       if (hostPhase === 'lobby') {
         return (a.name || '').localeCompare(b.name || '', 'vi');
       }
+      if (a.status === 'finished' && b.status !== 'finished') return -1;
+      if (b.status === 'finished' && a.status !== 'finished') return 1;
       if (b.quarter !== a.quarter) return b.quarter - a.quarter;
       if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
       return (a.name || '').localeCompare(b.name || '', 'vi');
@@ -614,6 +622,8 @@ export default function LeaderboardRoom({
 
   const effectivePlayersList = (syncedPlayersList && syncedPlayersList.length > 0) || (externalPlayersList && externalPlayersList.length > 0)
     ? [...rawList].sort((a, b) => {
+        if (a.status === 'finished' && b.status !== 'finished') return -1;
+        if (b.status === 'finished' && a.status !== 'finished') return 1;
         if (b.quarter !== a.quarter) return b.quarter - a.quarter;
         if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
         return (a.name || '').localeCompare(b.name || '', 'vi');
@@ -878,13 +888,13 @@ export default function LeaderboardRoom({
                             {p.quarter} / 16 Quý
                           </td>
                           <td className="py-2.5 px-3 text-center">
-                            {p.status === 'finished' || p.quarter >= 16 ? (
+                            {p.status === 'finished' ? (
                               <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300">
                                 🏆 Hoàn thành 16 Quý
                               </span>
                             ) : (
                               <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-bold border border-rose-300">
-                                🛑 Bãi miễn tại Quý {p.quarter}
+                                🛑 Bãi miễn tại Quý {p.failedAtQuarter || p.quarter}
                               </span>
                             )}
                           </td>
