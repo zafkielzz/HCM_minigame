@@ -41,6 +41,13 @@ export default function App() {
   const [multiplayerContext, setMultiplayerContext] = useState(null); // { session, playerId, playerName, roomCode }
   const [isSessionEndedByHost, setIsSessionEndedByHost] = useState(false);
   const [syncedPlayersList, setSyncedLeaderboardPlayers] = useState([]);
+  const [soloPlayerName, setSoloPlayerName] = useState(() => {
+    try {
+      return sessionStorage.getItem('hcm_tab_player_name') || '';
+    } catch (e) {
+      return '';
+    }
+  });
 
   // Notify host if player closes browser tab during game
   useEffect(() => {
@@ -69,7 +76,14 @@ export default function App() {
   };
 
   // Start game from intro (solo mode)
-  const handleStart = () => {
+  const handleStart = (customName) => {
+    const activeName = (customName !== undefined ? customName : soloPlayerName || '').trim();
+    if (activeName) {
+      setSoloPlayerName(activeName);
+      try {
+        sessionStorage.setItem('hcm_tab_player_name', activeName);
+      } catch (e) {}
+    }
     setMultiplayerContext(null);
     setIsSessionEndedByHost(false);
     setSyncedLeaderboardPlayers([]);
@@ -284,7 +298,7 @@ export default function App() {
               onRestart={handleRestart}
               isMultiplayerSession={Boolean(multiplayerContext)}
               roomCode={multiplayerContext?.roomCode}
-              playerName={multiplayerContext?.playerName}
+              playerName={multiplayerContext?.playerName || soloPlayerName}
               isSessionEndedByHost={isSessionEndedByHost}
               onLeaveMultiplayer={handleLeaveMultiplayer}
               onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
@@ -304,6 +318,7 @@ export default function App() {
                 onRestart={handleRestart}
                 onGoHome={handleRequestGoHome}
                 multiplayerContext={multiplayerContext}
+                playerName={multiplayerContext?.playerName || soloPlayerName}
               />
 
               <IndicatorBar

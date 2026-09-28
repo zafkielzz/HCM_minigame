@@ -3,6 +3,14 @@ import { Play, BookOpen, Trophy, Users, Scale, ShieldCheck, Zap, Sparkles, Alert
 import { playSound } from '../utils/sound';
 
 export default function IntroScreen({ onStart, onOpenHandbook, onOpenLeaderboard }) {
+  const [customName, setCustomName] = React.useState(() => {
+    try {
+      return sessionStorage.getItem('hcm_tab_player_name') || '';
+    } catch (e) {
+      return '';
+    }
+  });
+
   return (
     <div className="w-full bg-white/95 backdrop-blur-md border-2 border-slate-200/90 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-2xl animate-fadeIn">
       {/* Top Banner & Title */}
@@ -136,11 +144,32 @@ export default function IntroScreen({ onStart, onOpenHandbook, onOpenLeaderboard
           </div>
 
           {/* Action Call-to-actions */}
-          <div className="space-y-2.5 pt-2">
+          <div className="space-y-3 pt-2">
+            {/* Optional Nickname input */}
+            <div className="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-1">
+              <label className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                <span>Họ tên / Biệt danh cán bộ:</span>
+                <span className="text-[10px] text-slate-400 font-normal">Tùy chọn</span>
+              </label>
+              <input
+                type="text"
+                value={customName}
+                onChange={(e) => {
+                  setCustomName(e.target.value);
+                  try {
+                    sessionStorage.setItem('hcm_tab_player_name', e.target.value);
+                  } catch (err) {}
+                }}
+                placeholder="VD: Nguyễn Văn A (hoặc để trống)"
+                maxLength={25}
+                className="w-full px-3 py-2 text-xs rounded-lg bg-slate-50 border border-slate-200 focus:bg-white focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none text-slate-800 placeholder-slate-400 font-medium transition-all"
+              />
+            </div>
+
             <button
               onClick={() => {
                 playSound('select');
-                onStart();
+                onStart(customName);
               }}
               className="w-full py-3.5 px-5 rounded-xl font-black text-sm uppercase tracking-wider bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white shadow-md shadow-red-200 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
